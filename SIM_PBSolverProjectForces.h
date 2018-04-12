@@ -35,6 +35,8 @@ private:
 
 	SIM_Object* m_object;
 
+	float m_time;
+
 	void solve(int start, int end);
 
 };

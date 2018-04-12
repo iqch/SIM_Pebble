@@ -3,7 +3,6 @@
 ///////////////////////////////////////////////////////////////
 // UTILS
 
-
 void pb2geo(GU_Detail* gdp, const Patch& pb)
 {
 	// BUILD POINTS
@@ -473,7 +472,7 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 		return false;
 	};
 
-	UT_Matrix2FArray M;
+	UT_Matrix2FArray M(4);
 	M[0] = UT_Matrix2F(0, -1, 1, 0);
 	M[1] = UT_Matrix2F(-1, 0, 0, -1);
 	M[2] = UT_Matrix2F(0, 1, -1, 0);
@@ -593,7 +592,7 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 		//};
 
 		//D[0] /= smm; D[1] /= smm;
-		D.normalize();
+		//D.normalize();
 
 		if (stat.back) D *= -1;
 

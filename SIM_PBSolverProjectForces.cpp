@@ -38,6 +38,8 @@ SIM_Solver::SIM_Result SIM_PBSolverProjectForces::solveSingleObjectSubclass(SIM_
 
 	m_object = &object;
 
+	m_time = timestep;
+
 	// COLLECT FORCES
 	SIM_ConstDataArray F;
 
@@ -75,6 +77,7 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 	UT_StringArray channels;
 	channels.append("v");
 	channels.append("force");
+	channels.append("mass");
 
 	for (int id = start; id < end; id++)
 	{
@@ -87,8 +90,13 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 		Page& P = pb.getPrimVar("P");
 		Page& N = pb.getPrimVar("N");
 
-		Page& v = pb.getPrimVar("v");
-		v.m_projected = true;
+		Page& DPDU = pb.getPrimVar("dPdu");
+		Page& DPDV = pb.getPrimVar("dPdv");
+
+		Page& MASS = pb.getPrimVar("mass");
+
+		Page& V = pb.getPrimVar("v");
+		V.m_projected = true;
 
 		Page& force = pb.getPrimVar("force");
 		force.m_projected = true;
@@ -102,21 +110,57 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 
 				UT_Vector3 nul(0, 0, 0), _F, _W;
 
+				UT_Vector3 v = V.get(i, j);
+
 				for (int fi = 0; fi < m_forces.size(); fi++)
 				{
 					const SIM_Force* f = m_forces[fi];
 
-					f->getForce(*m_object, P.get(i, j), v.get(i, j), nul, 1.0, _F, _W);
+					f->getForce(*m_object, P.get(i, j), v, nul, 1.0, _F, _W);
 
 					FF += _F;
 				};
 
 				UT_Vector3 n = N.get(i, j);
-				n.normalize();
+				UT_Vector3 dPdu = DPDU.get(i, j);
+				UT_Vector3 dPdv = DPDV.get(i, j);
 
-				FF -= n*n.dot(FF);
+				float nproj = n.dot(FF);
 
-				force.get(i, j) = FF;
+				UT_Vector3 F = FF - n*nproj;
+
+				UT_Vector3 E(0, 0, nproj);
+
+				float fval = F.length();
+				F.normalize();
+
+				//E[0] = FF.dot(dPdu)*fval;
+				//E[1] = FF.dot(dPdv)*fval;
+
+
+				float detxy = dPdu[0] * dPdv[1] - dPdu[1] * dPdv[0];
+
+				float dU = F[0] * dPdv[1] - F[1] * dPdv[0];
+				float dV = dPdu[0] * F[1] - dPdu[1] * F[0];
+				E[0] += fval * dU / detxy; E[1] += fval * dV / detxy;
+
+				//UT_Vector3 diff = E[0] * dPdu + E[1] * dPdv - fval*F;
+
+				//int dl = diff.length();
+
+				//UT_Vector3 diff2 = E[0] * dPdu + E[1] * dPdv + E[2] * n - fval*F;
+
+				//int dl2 = diff2.length();
+
+				force.get(i, j) = E;
+
+				float mass = MASS.get(i, j)[0];
+
+				if (mass == 0) continue;
+
+				v += E*m_time / mass;
+
+				V.get(i, j) = v;
 			};
 		};
 	};

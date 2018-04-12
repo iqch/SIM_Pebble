@@ -17,7 +17,6 @@
 
 #include "SIM_PBSolverFLDiffuseCG.h"
 
-
 #include "SIM_PBBoundaryCondition.h"
 #include "SIM_PBApplyBoundaryCondition.h"
 
@@ -30,6 +29,7 @@
 #include "SIM_PBVisualizeAdvect.h"
 #include "SIM_PBVisualizeExpand.h"
 #include "SIM_PBVisualizeEdges.h"
+#include "SIM_PBVisualizeExpanedValues.h"
 
 void initializeSIM(void *)
 {
@@ -50,6 +50,7 @@ void initializeSIM(void *)
 	IMPLEMENT_DATAFACTORY(SIM_PBVisualizeAdvect);
 	IMPLEMENT_DATAFACTORY(SIM_PBVisualizeExpand);
 	IMPLEMENT_DATAFACTORY(SIM_PBVisualizeEdges);
+	IMPLEMENT_DATAFACTORY(SIM_PBVisualizeExpanedValues);
 
 	//// FLUID SYSTEM
 	IMPLEMENT_DATAFACTORY(SIM_PBSolverFLAdvect);
@@ -57,7 +58,6 @@ void initializeSIM(void *)
 	IMPLEMENT_DATAFACTORY(SIM_PBSolverFLDivergenceProject);
 
 	IMPLEMENT_DATAFACTORY(SIM_PBSolverFLDiffuseCG);
-
 
 	// FLUID SYSTEM BOUNDARY CONDITIONS
 	//IMPLEMENT_DATAFACTORY(SIM_PBBoundaryCondition);

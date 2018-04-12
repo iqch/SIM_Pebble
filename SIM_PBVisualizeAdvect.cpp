@@ -144,7 +144,10 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 
 				if (rel[1] > 0) continue;
 
-				float length = V.get(ii, jj).length() * m_timestep;
+				UT_Vector3 _v = V.get(ii, jj);
+				_v[2] = 0;
+
+				float length = _v.length() * m_timestep;
 
 				if (length == 0) continue;
 
@@ -180,7 +183,7 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 
 				UT_AutoJobInfoLock a(info);
 
-				// BUILD V GUIDE
+				// ...MIND ABOUT PROJ : BUILD V GUIDE
 				if (m_sg)
 				{
 					GEO_PrimPoly* PV = GEO_PrimPoly::build(m_gdp, 2, true, false);

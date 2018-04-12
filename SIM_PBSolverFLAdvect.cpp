@@ -189,7 +189,10 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 
 				if (rel[1] > 0) continue;
 
-				float length = V.get(I, J).length() * m_timestep; // *m_dissipation;
+				UT_Vector3 _v = V.get(I, J);
+				_v[2] = 0;
+
+				float length = _v.length() * m_timestep; // *m_dissipation;
 
 				if (length == 0) continue;
 
@@ -220,16 +223,16 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 				{
 					Page& PP = *m_sources[C[2]][chi];
 					UT_Vector3 v = PP.get(C);
-					if (PP.m_projected)
-					{
-						Patch& PB = *m_pebble->m_P[C[2]];
+					//if (PP.m_projected)
+					//{
+					//	Patch& PB = *m_pebble->m_P[C[2]];
 
-						const Page& DPDU = PB.getPrimVar("dPdu");
-						const Page& DPDV = PB.getPrimVar("dPdv");
-						const Page& N = PB.getPrimVar("N");
+					//	const Page& DPDU = PB.getPrimVar("dPdu");
+					//	const Page& DPDV = PB.getPrimVar("dPdv");
+					//	const Page& N = PB.getPrimVar("N");
 
-						v = v[0] * DPDU.get(C) + v[1] * DPDV.get(C) + v[2] * N.get(C);
-					};
+					//	v = v[0] * DPDU.get(C) + v[1] * DPDV.get(C) + v[2] * N.get(C);
+					//};
 
 					m_proxies[pb.id][chi]->get(I + 1, J + 1) = v;
 				};

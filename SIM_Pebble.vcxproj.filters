@@ -93,6 +93,9 @@
     <ClInclude Include="SIM_PBVisualizeAdvect.h">
       <Filter>Header Files\VISUALISERS</Filter>
     </ClInclude>
+    <ClInclude Include="SIM_PBVisualizeExpanedValues.h">
+      <Filter>Header Files\VISUALISERS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SIM_Geo2PB.cpp">
@@ -156,6 +159,9 @@
       <Filter>Source Files\VISUALIZERS</Filter>
     </ClCompile>
     <ClCompile Include="SIM_PBVisualize.cpp">
+      <Filter>Source Files\VISUALIZERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBVisualizeExpanedValues.cpp">
       <Filter>Source Files\VISUALIZERS</Filter>
     </ClCompile>
   </ItemGroup>

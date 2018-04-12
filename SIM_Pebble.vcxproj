@@ -37,6 +37,7 @@
     <ClInclude Include="SIM_PBVisualizeAdvect.h" />
     <ClInclude Include="SIM_PBVisualizeEdges.h" />
     <ClInclude Include="SIM_PBVisualizeExpand.h" />
+    <ClInclude Include="SIM_PBVisualizeExpanedValues.h" />
     <ClInclude Include="SIM_Pebble.h" />
     <ClInclude Include="SOP_GEO2PB.h" />
   </ItemGroup>
@@ -59,6 +60,7 @@
     <ClCompile Include="SIM_PBVisualizeAdvect.cpp" />
     <ClCompile Include="SIM_PBVisualizeEdges.cpp" />
     <ClCompile Include="SIM_PBVisualizeExpand.cpp" />
+    <ClCompile Include="SIM_PBVisualizeExpanedValues.cpp" />
     <ClCompile Include="SIM_Pebble.cpp" />
     <ClCompile Include="SOP_GEO2PB.cpp" />
     <ClCompile Include="statics.cpp" />
@@ -133,16 +135,15 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;SIM_PEBBLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(HOUDINI)\toolkit\include;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>include.h</PrecompiledHeaderFile>
       <AdditionalOptions>-Zm264 %(AdditionalOptions)</AdditionalOptions>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
