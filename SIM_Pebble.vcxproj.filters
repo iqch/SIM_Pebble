@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\SOLVERS">
+      <UniqueIdentifier>{bb7ed19a-a445-42dd-a346-13dfd49cada0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\VISUALISERS">
+      <UniqueIdentifier>{49590ed9-926e-4e94-9385-34449db405bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\VISUALIZERS">
+      <UniqueIdentifier>{b16cbd66-c3ff-4e4b-9b96-33c32bb63a4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SOLVERS">
+      <UniqueIdentifier>{17e5ef64-861c-410a-958c-fdb814e0b635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BOUNDARY_CONDITIONS">
+      <UniqueIdentifier>{cd690801-24ab-4efa-aa2a-0651c18d79fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BOUNDARY_CONDITIONS">
+      <UniqueIdentifier>{5dd2caf1-a2ce-45fb-84ae-45c60131a1aa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="osd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_Geo2PB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PB2Geo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_Pebble.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SOP_GEO2PB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBApplyBoundaryCondition.h">
+      <Filter>Header Files\BOUNDARY_CONDITIONS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBBoundaryCondition.h">
+      <Filter>Header Files\BOUNDARY_CONDITIONS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverMake.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverProjectForces.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverRelationships.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverVOPProcess.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverFLAdvect.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverFLDiffuse.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverFLDiffuseCG.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBSolverFLDivergenceProject.h">
+      <Filter>Header Files\SOLVERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBVisualizeEdges.h">
+      <Filter>Header Files\VISUALISERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBVisualizeExpand.h">
+      <Filter>Header Files\VISUALISERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBVisualize.h">
+      <Filter>Header Files\VISUALISERS</Filter>
+    </ClInclude>
+    <ClInclude Include="SIM_PBVisualizeAdvect.h">
+      <Filter>Header Files\VISUALISERS</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SIM_Geo2PB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PB2Geo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_Pebble.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SOP_GEO2PB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="statics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pageworks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBApplyBoundaryCondition.cpp">
+      <Filter>Source Files\BOUNDARY_CONDITIONS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBBoundaryCondition.cpp">
+      <Filter>Source Files\BOUNDARY_CONDITIONS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverFLDiffuseCG.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverFLDivergenceProject.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverMake.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverProjectForces.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverRelationships.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverVOPProcess.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverFLAdvect.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBSolverFLDiffuse.cpp">
+      <Filter>Source Files\SOLVERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBVisualizeAdvect.cpp">
+      <Filter>Source Files\VISUALIZERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBVisualizeEdges.cpp">
+      <Filter>Source Files\VISUALIZERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBVisualizeExpand.cpp">
+      <Filter>Source Files\VISUALIZERS</Filter>
+    </ClCompile>
+    <ClCompile Include="SIM_PBVisualize.cpp">
+      <Filter>Source Files\VISUALIZERS</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
