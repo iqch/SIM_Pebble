@@ -94,6 +94,7 @@ using namespace std;
 #include <UT/UT_Vector3.h>
 #include <UT/UT_WorkBuffer.h>
 #include <UT/UT_ThreadedAlgorithm.h>
+#include <UT/UT_Quaternion.h>
 
 #include <GU/GU_DetailHandle.h>
 #include <GU/GU_Detail.h>
@@ -678,6 +679,7 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	vector<Page*>& Rels, UT_Lock& lock, traceStat& res);
 
 Page* getExpandedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
+bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV);
 Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
 
 bool declareEntity(vector<Patch*>& PEBBLE, UT_String name);

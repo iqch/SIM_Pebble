@@ -67,57 +67,49 @@ void SIM_PBVisualizeExpanedValues::buildGuideGeometrySubclass(const SIM_RootData
 
 	if (pb.chs.find(chan) == -1) return;
 
-	const Page& P = pb.getPrimVar("P");
-	const Page& N = pb.getPrimVar("N");
-	const Page& DPDU = pb.getPrimVar("dPdu");
-	const Page& DPDV = pb.getPrimVar("dPdv");
-	const Page& CD = pb.getPrimVar("Cd");
+	Page* P = getExpandedPrimVar(m_pebble->m_P, pb, "P");
+	//Page* N = getExpandedPrimVar(m_pebble->m_P, pb, "N");
 
-	const Page& V = pb.getPrimVar(chan);
+	//Page* DPDU = new Page(pb.dim[0] + 2, pb.dim[1] + 2, true);
+	//Page* DPDV = new Page(pb.dim[0] + 2, pb.dim[1] + 2, true);
+	//getExpandedPrimVarDiv(m_pebble->m_P, pb, DPDU, DPDV);
+
+	//Page* V = getExpandedPrimVarProjected(m_pebble->m_P, pb, chan);
 
 	// FRAME
-	for (int i = 0; i < pb.dim[0]; i++)
-		for (int j = 0; j < pb.dim[1]; j++)
+	for (int i = 0; i < pb.dim[0]+2; i++)
+		for (int j = 0; j < pb.dim[1]+2; j++)
 	{
-		UT_Vector3 n = N.get(i, j);
-		UT_Vector3 dpdu = DPDU.get(i, j);
-		UT_Vector3 dpdv = DPDV.get(i, j);
+		//UT_Vector3 n = N->get(i, j);
+		//UT_Vector3 dpdu = DPDU->get(i, j);
+		//UT_Vector3 dpdv = DPDV->get(i, j);
 
-		UT_Vector3 p = P.get(i, j);
+		UT_Vector3 p = P->get(i, j);
 
-		UT_Vector3 v = V.get(i, j);
+		//UT_Vector3 v = V->get(i, j);
 
-		GEO_PrimPoly* PPN = GEO_PrimPoly::build(gdp, 2, true, false);
-		GA_Offset pt = gdp->appendPointBlock(2);
+		//GEO_PrimPoly* PPN = GEO_PrimPoly::build(gdp, 2, true, false);
+		GA_Offset pt = gdp->appendPointBlock(1);
 
-		p += upper*n;
+		//p += upper*n;
 		gdp->setPos3(pt, p);
 		cdh.set(pt, UT_Vector3(0, 0, 1));
-		PPN->setPointOffset(0, pt);
+		//PPN->setPointOffset(0, pt);
 		pt++;
 
-		p += v[0]*dpdu+v[1]*dpdv;
-		gdp->setPos3(pt, p);
-		cdh.set(pt, UT_Vector3(0, 0.5, 1));
-		PPN->setPointOffset(1, pt);
-
-
-		//// FRAME
-		//int vtcnt = pb.dim[0] * 2 + pb.dim[1] * 2;
-		//GA_Offset pt = gdp->appendPointBlock(vtcnt);
-
-		//// V0
-		//GEO_PrimPoly* PPV0 = GEO_PrimPoly::build(gdp, pb.dim[1], true, false);
-		//for (int i = 0; i < pb.dim[1]; i++)
-		//{
-		//	gdp->setPos3(pt, P.get(i, 0) + N.get(i, 0)*l);
-		//	PPV0->setPointOffset(i, pt);
-		//	cdh.set(pt, UT_Vector3(1, 0, 0));
-		//	pt++;
-		//};
-
+		//p += v[0] * dpdu + v[1] * dpdv;
+		//p += dpdu;
+		//p += dpdv;
+		//gdp->setPos3(pt, p);
+		//cdh.set(pt, UT_Vector3(0, 0.5, 1));
+		//PPN->setPointOffset(1, pt);
 	};
 
+	delete P;
+	//delete DPDU;
+	//delete DPDV;
+	//delete N;
+	//delete V;
 };
 
 

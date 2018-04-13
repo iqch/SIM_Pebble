@@ -1245,6 +1245,256 @@ Page* getExpandedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_Stri
 	return _P;
 };
 
+bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV)
+{
+	float A[4] = { M_PI_2, M_PI, M_PI+M_PI_2, 0};
+
+	const Page& dPdu = pb.getPrimVar("dPdu");
+	const Page& dPdv = pb.getPrimVar("dPdv");
+	//const Page& N = pb.getPrimVar("N");
+
+	// CORE
+	for (int i = 0; i < pb.dim[0]; i++)
+		for (int j = 0; j < pb.dim[1]; j++)
+		{
+			DPDU->get(i + 1, j + 1) = dPdu.get(i, j);
+			DPDV->get(i + 1, j + 1) = dPdv.get(i, j);
+		};
+
+	// SIDES
+	int xs[4] = { 1,	pb.dim[0] + 1,	pb.dim[0],	0 };
+	int ys[4] = { 0,	1,			pb.dim[1] + 1,	pb.dim[1] };
+
+	int dxs[4] = { 1,0,-1,0 };
+	int dys[4] = { 0,1,0,-1 };
+
+	int sl[4] = { pb.dim[0],pb.dim[1],pb.dim[0],pb.dim[1] };
+
+	int ddx[4] = { 0,-1,0,1 };
+	int ddy[4] = { 1,0,-1,0 };
+
+	int id = pb.id;
+
+	for (int S = 0; S < 4; S++)
+	{
+		int mark = pb.f[S];
+		if (mark != -1)
+		{
+			const Patch& PP = *PEBBLE[pb.f[S]];
+
+			int x0 = xs[S];
+			int y0 = ys[S];
+			int dx = dxs[S];
+			int dy = dys[S];
+
+			int X0, Y0, DX, DY;
+
+			if (PP.f[0] == id)
+			{
+				X0 = PP.dim[0] - 1;
+				Y0 = 0;
+				DX = -1;
+				DY = 0;
+			};
+
+			if (PP.f[1] == id)
+			{
+				X0 = PP.dim[0] - 1;
+				Y0 = PP.dim[1] - 1;
+				DX = 0;
+				DY = -1;
+			};
+
+			if (PP.f[2] == id)
+			{
+				X0 = 0;
+				Y0 = PP.dim[1] - 1;
+				DX = 1;
+				DY = 0;
+			};
+
+			if (PP.f[3] == id)
+			{
+				X0 = 0;
+				Y0 = 0;
+				DX = 0;
+				DY = 1;
+			};
+
+			int X = X0;
+			int Y = Y0;
+
+			int x = x0;
+			int y = y0;
+
+			const Page& dPdu = PP.getPrimVar("dPdu");
+			const Page& dPdv = PP.getPrimVar("dPdv");
+			const Page& N = PP.getPrimVar("N");
+
+			int CS = S * 4 + PP.reflect(id);
+			float a = A[CASE[CS]];
+
+			UT_QuaternionF Q;
+
+			for (int i = 0; i < sl[S]; i++)
+			{
+				UT_Vector3 dpdu = dPdu.get(X, Y);
+				UT_Vector3 dpdv = dPdv.get(X, Y);
+
+				UT_Vector3 n = N.get(X, Y);
+
+				Q.updateFromAngleAxis(a, n);
+
+				DPDU->get(x, y) = Q.rotate(dpdu);;
+				DPDV->get(x, y) = Q.rotate(dpdv);
+
+				X += DX; Y += DY;
+				x += dx;
+				y += dy;
+			};
+		}
+		else // MARK == -1
+		{
+			int x0 = xs[S];
+			int y0 = ys[S];
+			int dx = dxs[S];
+			int dy = dys[S];
+
+			int x = x0;
+			int y = y0;
+
+			// JUST COPY ROW
+			for (int i = 0; i < sl[S]; i++)
+			{
+				DPDU->get(x, y) = DPDU->get(x + ddx[S], y + ddy[S]);
+				DPDV->get(x, y) = DPDV->get(x + ddx[S], y + ddy[S]);
+				x += dx; y += dy;
+			};
+		};
+	};
+
+	// CORNERS
+	int MNX[4] = { 0,-1,-1,0 };
+	int MNY[4] = { 0,0,-1,-1 };
+
+	int MPX[4] = { -1,-1,0,0 };
+	int MPY[4] = { 0,-1,-1,0 };
+
+	UT_QuaternionF Q;
+
+	for (int i = 0; i < 4; i++)
+	{
+		UT_Vector3 dpdu = dPdu.get(MNX[i], MNY[i]);
+		UT_Vector3 dpdv = dPdv.get(MNX[i], MNY[i]);
+
+		UT_Vector3 OU = dpdu;
+		UT_Vector3 OV = dpdv;
+
+		// POS WINDING
+		UT_Vector3 O1U = OU;
+		UT_Vector3 O1V = OV;
+
+		int lastid = pb.id;
+		int idx = pb.f[i];
+
+		int lastref = i;
+
+		int far = 0;
+		while (idx != -1 && idx != id && far < 2)
+		{
+			const Patch& PP = *PEBBLE[idx];
+			int ref = PP.reflect(lastid);
+
+			if (ref == -1)
+			{
+				// INCONSISTENCE!
+				break;
+			};
+
+			int CS = lastref * 4 + ref;
+
+			float a  = A[CASE[CS]];
+
+			//const Page& e = PP.getPrimVar(name);
+
+			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MPX[ref], MPY[ref]);
+			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MPX[ref], MPY[ref]);
+			UT_Vector3 n = PP.getPrimVar("N").get(MPX[ref], MPY[ref]);
+
+			Q.updateFromAngleAxis(a, n);
+
+			O1U = Q.rotate(dpdu);
+			O1V = Q.rotate(dpdv);
+
+			ref++;
+			ref %= 4;
+
+			lastref = ref;
+
+			lastid = idx;
+			idx = PP.f[ref];
+
+			far++;
+		};
+
+		// NEG WINDING
+		UT_Vector3 O2U = OU;
+		UT_Vector3 O2V = OV;
+
+		lastid = pb.id;
+		idx = pb.f[(i + 3) % 4]; // i-1
+
+		far = 0;
+
+		lastref = i;
+
+		while (idx != -1 && idx != id && far < 2)
+		{
+			const Patch& PP = *PEBBLE[idx];
+			int ref = PP.reflect(lastid);
+
+			if (ref == -1)
+			{
+				// INCONSISTENCE!
+				break;
+			};
+
+			int CS = lastref * 4 + ref;
+
+			float a = A[CASE[CS]];
+
+			//const Page& e = PP.getPrimVar(name);
+
+			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MNX[ref], MNY[ref]);
+			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MNX[ref], MNY[ref]);
+			UT_Vector3 n = PP.getPrimVar("N").get(MNX[ref], MNY[ref]);
+
+			Q.updateFromAngleAxis(a, n);
+
+			O2U = Q.rotate(dpdu);
+			O2V = Q.rotate(dpdv);
+
+			ref += 3; // -1
+			ref %= 4;
+
+			lastref = ref;
+
+			lastid = idx;
+			idx = PP.f[ref];
+
+			far++;
+		};
+
+		UT_Vector3 resU = (O1U + O2U)*0.5; resU.normalize();
+		UT_Vector3 resV = (O1V + O2V)*0.5; resV.normalize();
+
+		DPDU->get(MNX[i], MNY[i]) = resU; 
+		DPDV->get(MNX[i], MNY[i]) = resV;
+	};
+
+	return true;
+}
+
 Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name)
 {
 	// MAKE
