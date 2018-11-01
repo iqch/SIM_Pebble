@@ -76,7 +76,9 @@ SIM_Solver::SIM_Result SIM_PBSolverRelationships::solveSingleObjectSubclass(SIM_
 					GU_DetailHandleAutoReadLock gdl(gdh);
 					const GU_Detail *gdp = gdl.getGdp();
 
-					GU_RayIntersect *isect = new GU_RayIntersect(gdp, 0, 0, 0, 1, 0, true);
+					const GA_PrimitiveGroup *zgroup = 0;
+
+					GU_RayIntersect *isect = new GU_RayIntersect(gdp, zgroup, 0, 0, 1, 0, true);
 
 					m_colliders.push_back(isect);
 				};
@@ -101,7 +103,9 @@ SIM_Solver::SIM_Result SIM_PBSolverRelationships::solveSingleObjectSubclass(SIM_
 					GU_DetailHandleAutoReadLock gdl(gdh);
 					const GU_Detail *gdp = gdl.getGdp();
 
-					GU_RayIntersect *isect = new GU_RayIntersect(gdp, 0, 0, 0, 1, 0, true);
+					const GA_PrimitiveGroup *zgroup = 0;
+
+					GU_RayIntersect *isect = new GU_RayIntersect(gdp, zgroup, 0, 0, 1, 0, true);
 
 					m_sources.push_back(isect);
 				};

@@ -95,7 +95,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -149,7 +149,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <OutputFile>$(USERPROFILE)\Documents\houdini16.5\dso\$(ProjectName).dll</OutputFile>
+      <OutputFile>$(USERPROFILE)\Documents\houdini17.0\dso\$(ProjectName).dll</OutputFile>
       <AdditionalLibraryDirectories>$(HOUDINI)\custom\houdini\dsolib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libVOP.lib;libSHOP.lib;libSOP.lib;libCVEX.lib;libosdCPU_md.lib;libSYS.lib;libSIM.lib;libGEO.lib;libGA.lib;libUT.lib;libPRM.lib;libOp.lib;libGU.lib;libDOP.lib;ws2_32.lib;hboost_system-mt.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
