@@ -59,7 +59,7 @@ private:
 	//bool m_oneWay;
 	mutable UT_Lock m_lock;
 
-	mutable vector<Page*> m_Ps, m_Vs, m_Rels; // m_dPdUs, m_dPdVs, m_Ns,
+	mutable vector<Page*> m_Ps, m_Vs, m_Rels, m_dPdUs, m_dPdVs, m_Ns;
 	mutable bool m_sg;
 
 	mutable GU_Detail* m_gdp;

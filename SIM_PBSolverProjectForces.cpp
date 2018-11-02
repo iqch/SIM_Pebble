@@ -88,10 +88,10 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 		pb.declarePages(channels);
 
 		Page& P = pb.getPrimVar("P");
-		Page& N = pb.getPrimVar("N");
+		//Page& N = pb.getPrimVar("N");
 
-		Page& DPDU = pb.getPrimVar("dPdu");
-		Page& DPDV = pb.getPrimVar("dPdv");
+		//Page& DPDU = pb.getPrimVar("dPdu");
+		//Page& DPDV = pb.getPrimVar("dPdv");
 
 		Page& MASS = pb.getPrimVar("mass");
 
@@ -121,29 +121,24 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 					FF += _F;
 				};
 
-				UT_Vector3 n = N.get(i, j);
-				UT_Vector3 dPdu = DPDU.get(i, j);
-				UT_Vector3 dPdv = DPDV.get(i, j);
+				//UT_Vector3 n = N.get(i, j);
+				//UT_Vector3 dPdu = DPDU.get(i, j);
+				//UT_Vector3 dPdv = DPDV.get(i, j);
 
-				float nproj = n.dot(FF);
+				//float nproj = n.dot(FF);
 
-				UT_Vector3 F = FF - n*nproj;
+				//UT_Vector3 F = FF - n*nproj;
 
-				UT_Vector3 E(0, 0, nproj);
+				//UT_Vector3 E(0, 0, nproj);
 
-				float fval = F.length();
-				F.normalize();
+				//float fval = F.length();
+				//F.normalize();
 
+				// * ITER 1
 				//E[0] = FF.dot(dPdu)*fval;
 				//E[1] = FF.dot(dPdv)*fval;
 
-
-				float detxy = dPdu[0] * dPdv[1] - dPdu[1] * dPdv[0];
-
-				float dU = F[0] * dPdv[1] - F[1] * dPdv[0];
-				float dV = dPdu[0] * F[1] - dPdu[1] * F[0];
-				E[0] += fval * dU / detxy; E[1] += fval * dV / detxy;
-
+				// * ITER 2
 				//UT_Vector3 diff = E[0] * dPdu + E[1] * dPdv - fval*F;
 
 				//int dl = diff.length();
@@ -152,13 +147,33 @@ void SIM_PBSolverProjectForces::solve(int start, int end)
 
 				//int dl2 = diff2.length();
 
-				force.get(i, j) = E;
+				// * ITER 3
+				//float detxy = dPdu[0] * dPdv[1] - dPdu[1] * dPdv[0];
+
+				//float dU = F[0] * dPdv[1] - F[1] * dPdv[0];
+				//float dV = dPdu[0] * F[1] - dPdu[1] * F[0];
+				//E[0] += fval * dU / detxy; E[1] += fval * dV / detxy;
+
+				// * ITER 4
+				//E[0] = F.dot(dPdu);
+
+				//dPdv -= dPdv.dot(dPdu)*dPdu;
+				//dPdv.normalize();
+				//
+				//E[1] = F.dot(dPdv);
+
+				UT_Vector3 F = pb.project(FF,i, j);
+
+				F[2] = 0;
+
+				// OK
+				force.get(i, j) = F;
 
 				float mass = MASS.get(i, j)[0];
 
 				if (mass == 0) continue;
 
-				v += E*m_time / mass;
+				v += F*m_time / mass;
 
 				V.get(i, j) = v;
 			};

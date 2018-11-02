@@ -26,15 +26,11 @@ const SIM_DopDescription * SIM_PBSolverFLAdvect::getDopDescription()
 // +++-
 SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engine & engine, SIM_Object & object, SIM_ObjectArray & feedbacktoobjects, const SIM_Time & timestep, bool newobject)
 {
-	//bool activate = (getActivate() != 0);
-	//if (!activate) return SIM_SOLVER_SUCCESS;
-
 	UT_String dn = "";
 	getDataName(dn);
 
 	SIM_Data* isPebble = SIM_DATA_GET(object, "IsPebble", SIM_Data);
 	if (isPebble == NULL) return SIM_SOLVER_SUCCESS;
-
 
 	m_timestep = timestep;
 	//m_dissipation = getDissipate();
@@ -53,15 +49,15 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 
 	m_Ps.resize(psz);
 	m_Vs.resize(psz);
-	//m_dPdUs.resize(psz);
-	//m_dPdVs.resize(psz);
-	//m_Ns.resize(psz);
 	m_Rels.resize(psz);
+
+	m_dPdUs.resize(psz);
+	m_dPdVs.resize(psz);
+	m_Ns.resize(psz);
 
 	for (int i = 0; i < psz; i++)
 	{
 		m_Ps[i] = NULL; m_Vs[i] = NULL;
-		//m_dPdUs[i] = NULL; m_dPdVs[i] = NULL; m_Ns[i] = NULL;
 		m_Rels[i] = NULL; 
 	};
 
@@ -74,7 +70,7 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 	for (Patch* _pb : m_pebble->m_P)
 	{
 		Patch& pb = *_pb;
-		//UT_StringArray _channels = pb.chs;
+
 		for (int chi = 0; chi < m_channels.size(); chi++)
 		{
 			UT_String name;
@@ -131,10 +127,12 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 	{
 		if (m_Ps[i] != NULL) delete m_Ps[i];
 		if (m_Vs[i] != NULL) delete m_Vs[i];
-		//if (m_dPdUs[i] != NULL) delete m_dPdUs[i];
-		//if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
-		//if (m_Ns[i] != NULL) delete m_Ns[i];
+
 		if (m_Rels[i] != NULL) delete m_Rels[i];
+
+		if (m_dPdUs[i] != NULL) delete m_dPdUs[i];
+		if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
+		if (m_Ns[i] != NULL) delete m_Ns[i];
 
 		Patch& pb = *m_pebble->m_P[i];
 
@@ -176,7 +174,7 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 		const Page& DPDU = pb.getPrimVar("dPdu");
 		const Page& DPDV = pb.getPrimVar("dPdv");
 		const Page& N = pb.getPrimVar("N");
-		
+		//
 		const Page& UV = pb.getPrimVar("uvw");
 
 		// EACH SAMPLE
@@ -212,7 +210,7 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 
 				traceStat stat;
 
-				trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, /*m_dPdUs, m_dPdVs, m_Ns, */m_Rels, m_lock, stat);
+				trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_lock, stat);
 
 				UT_Vector3 C = path.last();
 
@@ -223,16 +221,35 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 				{
 					Page& PP = *m_sources[C[2]][chi];
 					UT_Vector3 v = PP.get(C);
-					//if (PP.m_projected)
-					//{
-					//	Patch& PB = *m_pebble->m_P[C[2]];
+					
+					if (PP.m_projected)
+					{
+						v[2] = 0;
+						//Patch& PB = *m_pebble->m_P[C[2]];
 
-					//	const Page& DPDU = PB.getPrimVar("dPdu");
-					//	const Page& DPDV = PB.getPrimVar("dPdv");
-					//	const Page& N = PB.getPrimVar("N");
+						//UT_Vector3 dPdu = PB.getPrimVar("dPdu").get(C);
+						//UT_Vector3 dPdv = PB.getPrimVar("dPdv").get(C);
 
-					//	v = v[0] * DPDU.get(C) + v[1] * DPDV.get(C) + v[2] * N.get(C);
-					//};
+						//dPdv -= dPdu.dot(dPdv)*dPdu;
+						//dPdv.normalize();
+
+						//UT_Vector3 _V = v[0]*dPdu + v[1]*dPdv + v[2]* PB.getPrimVar("N").get(C);
+
+						//UT_Vector3 _n = N.get(uv);
+
+						//v[2] = _V.dot(_n);
+
+						//_V -= v[2] * _n;
+
+						//UT_Vector3 _dpdu = DPDU.get(uv);
+
+						//UT_Vector3 _dpdv = DPDV.get(uv);
+						//_dpdv -= _dpdu*_dpdu.dot(_dpdv);
+						//_dpdv.normalize();
+
+						//v[0] = _V.dot(_dpdu);
+						//v[1] = _V.dot(_dpdv);
+					};
 
 					m_proxies[pb.id][chi]->get(I + 1, J + 1) = v;
 				};

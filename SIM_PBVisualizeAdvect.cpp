@@ -71,15 +71,15 @@ void SIM_PBVisualizeAdvect::buildGuideGeometrySubclass(const SIM_RootData & root
 
 	m_Ps.resize(psz);
 	m_Vs.resize(psz);
-	//m_dPdUs.resize(psz);
-	//m_dPdVs.resize(psz);
-	//m_Ns.resize(psz);
+	m_dPdUs.resize(psz);
+	m_dPdVs.resize(psz);
+	m_Ns.resize(psz);
 	m_Rels.resize(psz);
 
 	for (int i = 0; i < psz; i++)
 	{
 		m_Ps[i] = NULL; m_Vs[i] = NULL;
-		//m_dPdUs[i] = NULL; m_dPdVs[i] = NULL;	m_Ns[i] = NULL; 
+		m_dPdUs[i] = NULL; m_dPdVs[i] = NULL;	m_Ns[i] = NULL; 
 		m_Rels[i] = NULL;
 	};
 
@@ -104,9 +104,9 @@ void SIM_PBVisualizeAdvect::buildGuideGeometrySubclass(const SIM_RootData & root
 	{
 		if (m_Ps[i] != NULL) delete m_Ps[i];
 		if (m_Vs[i] != NULL) delete m_Vs[i];
-		//if (m_dPdUs[i] != NULL) delete m_dPdUs[i];
-		//if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
-		//if (m_Ns[i] != NULL) delete m_Ns[i];
+		if (m_dPdUs[i] != NULL) delete m_dPdUs[i];
+		if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
+		if (m_Ns[i] != NULL) delete m_Ns[i];
 		if (m_Rels[i] != NULL) delete m_Rels[i];
 	};
 };
@@ -174,7 +174,7 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 
 				traceStat stat;
 
-				bool res = trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, /*m_dPdUs, m_dPdVs, m_Ns,*/ m_Rels, m_lock, stat);
+				bool res = trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_lock, stat);
 
 				if (path.size() < 2)
 				{
