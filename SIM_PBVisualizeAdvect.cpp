@@ -16,6 +16,7 @@ const SIM_DopDescription * SIM_PBVisualizeAdvect::getDopDescription()
 	static PRM_Template		 theGuideTemplates[] = {
 		PRM_Template(PRM_TOGGLE,	1, &SIMshowguideName, PRMzeroDefaults),
 		PRM_Template(PRM_FLT_J,	1, &theTimestepName, &theTimestepDef),
+		PRM_Template(PRM_FLT_J,	1, &theMinMagnitudeName, &theMinMagnitudeDef),
 		PRM_Template(PRM_FLT_J,	1, &theAmountName, PRMoneDefaults, 0, &PRMunitRange),
 		PRM_Template(PRM_INT,	1, &theSeedName, PRMzeroDefaults),
 		PRM_Template(PRM_INT,	1, &theMarkName, &theMarkDef, 0, &theMarkRng),
@@ -65,6 +66,8 @@ void SIM_PBVisualizeAdvect::buildGuideGeometrySubclass(const SIM_RootData & root
 	m_timestep = getTimestep(options);
 	m_upper = getUpper(options);
 
+	m_minmagnitude = getMinMagnitude(options);
+
 	m_sg = getShowVGuide(options);
 
 	int psz = m_pebble->m_P.size();
@@ -75,12 +78,14 @@ void SIM_PBVisualizeAdvect::buildGuideGeometrySubclass(const SIM_RootData & root
 	m_dPdVs.resize(psz);
 	m_Ns.resize(psz);
 	m_Rels.resize(psz);
+	m_Gs.resize(psz);
 
 	for (int i = 0; i < psz; i++)
 	{
 		m_Ps[i] = NULL; m_Vs[i] = NULL;
 		m_dPdUs[i] = NULL; m_dPdVs[i] = NULL;	m_Ns[i] = NULL; 
 		m_Rels[i] = NULL;
+		m_Gs[i] = NULL;
 	};
 
 	int mark = getMark(options);
@@ -108,6 +113,7 @@ void SIM_PBVisualizeAdvect::buildGuideGeometrySubclass(const SIM_RootData & root
 		if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
 		if (m_Ns[i] != NULL) delete m_Ns[i];
 		if (m_Rels[i] != NULL) delete m_Rels[i];
+		if (m_Gs[i] != NULL) delete m_Gs[i];
 	};
 };
 
@@ -140,16 +146,18 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 			{
 				if (RA.frandom() >= m_amount) continue;
 
-				UT_Vector3 rel = REL.get(ii, jj);
+				UT_Vector3 uv = UV.get(ii, jj);
+
+				UT_Vector3 rel = REL.get(uv);
 
 				if (rel[1] > 0) continue;
 
-				UT_Vector3 _v = V.get(ii, jj);
-				_v[2] = 0;
+				UT_Vector3 _v = V.get(uv);
+				//_v[2] = 0;
 
 				float length = _v.length() * m_timestep;
 
-				if (length == 0) continue;
+				if (length < m_minmagnitude) continue;
 
 				float L = length;
 
@@ -164,8 +172,6 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 
 				// CALCULATE
 
-				UT_Vector3 uv = UV.get(ii, jj);
-
 				UT_Vector3Array path;
 				UT_Vector3Array colors;
 
@@ -173,10 +179,15 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 				colors.append(UT_Vector3(1, 1, 0));
 
 				traceStat stat;
+				stat.id = id;
 
-				bool res = trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_lock, stat);
+				//continue;
 
-				if (path.size() < 2)
+				bool res = trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_Gs, m_lock, stat);
+
+				int sz = path.size();
+
+				if (sz < 2)
 				{
 					continue;
 				};
@@ -188,14 +199,14 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 				{
 					GEO_PrimPoly* PV = GEO_PrimPoly::build(m_gdp, 2, true, false);
 
-					UT_Vector3 vn = V.get(ii, jj);
-					UT_Vector3 n = N.get(ii, jj); n.normalize();
+					UT_Vector3 vn = pb.composite(V.get(uv),uv);
+					UT_Vector3 n = N.get(uv); n.normalize();
 
 					vn -= n*vn.dot(n);
 
 					vn.normalize();
 
-					UT_Vector3 pp = P.get(ii, jj) + m_upper*n;
+					UT_Vector3 pp = P.get(uv) + m_upper*n;
 
 					GA_Offset poff0 = m_gdp->appendPoint();
 					m_gdp->setPos3(poff0, pp);
@@ -210,6 +221,7 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 
 				// BUILD PATH
 				GEO_PrimPoly* PP = GEO_PrimPoly::build(m_gdp, path.size(), true, false);
+
 
 				for (int k = 0; k < path.size(); k++)
 				{
@@ -226,14 +238,16 @@ void SIM_PBVisualizeAdvect::buildPartial(const UT_JobInfo & info) const
 					UT_Vector3 nn = np.get(C);
 					nn.normalize();
 
-					m_gdp->setPos3(poff0, pp.get(C) + nn*m_upper);
+					UT_Vector3 __P = pp.get(C);
 
-					UT_Vector3 CLR = colors[k] * (1 - (float(k)) / float(path.size() + 1));
+					m_gdp->setPos3(poff0, __P + nn*m_upper);
+
+					UT_Vector3 CLR = colors[k]; // *(1 - (float(k)) / float(path.size() + 1));
 					// CD.get(ii, jj) * float(k) / float(k - 1); // UT_Vector3(1, 0.85, 0.15)* float(k) / float(k - 1);  
 					//UV.get(ii, jj); // UT_Vector3(1, 0, 1); // CD.get(i,j) * float(k)/float(k-1)
 					//CLR[2] = (ii + jj) % 2;
 
-					if (!res && k == path.size() - 1) CLR = UT_Vector3(1, 0, 0);
+					//if (!res && k == path.size() - 1) CLR = UT_Vector3(1, 0, 0);
 
 					m_cdh.set(poff0, CLR);
 					PP->setPointOffset(k, poff0);

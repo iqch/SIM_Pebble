@@ -217,11 +217,17 @@ public:
 
 	int reflect(int id) const;
 
-	UT_Vector3 project(UT_Vector3 V, int i, int j);
+	UT_Vector3 project(UT_Vector3 V, int i, int j) const;
 
-	UT_Vector3 project(UT_Vector3 V, UT_Vector3 UV);
+	UT_Vector3 project(UT_Vector3 V, UT_Vector3 UV) const;
 
-	UT_Vector3 composite(UT_Vector3 V, UT_Vector3 UV);
+	UT_Vector3 composite(UT_Vector3 V, int i, int j) const;
+
+	UT_Vector3 composite(UT_Vector3 V, UT_Vector3 UV) const;
+
+	UT_Vector2 decompose(UT_Vector3 V, UT_Vector3 UV) const;
+
+	UT_Vector2 decompose(UT_Vector3 V, int i, int j) const;
 
 private :
 	Patch();
@@ -243,6 +249,7 @@ typedef vector<Page*> Proxy;
 #define SIM_NAME_UPPER "upper"
 
 #define SIM_NAME_TIMESTEP "timestep"
+#define SIM_NAME_MINMAGNITUDE "minmagnitude"
 #define SIM_NAME_SEED "seed"
 #define SIM_NAME_AMOUNT "amount"
 #define SIM_NAME_SHOWV "showvguide"
@@ -287,6 +294,8 @@ extern PRM_Default theChannelsDef;
 
 extern PRM_Name	 theTimestepName;
 extern PRM_Default theTimestepDef;
+extern PRM_Name	 theMinMagnitudeName;
+extern PRM_Default theMinMagnitudeDef;
 extern PRM_Name	 theAmountName;
 extern PRM_Name	 theSeedName;
 
@@ -345,23 +354,28 @@ struct traceStat
 	bool back = true;
 
 	UT_Matrix2F w = UT_Matrix2F(1);
+	//UT_Matrix2F W = UT_Matrix2F(1);
+
+	int id = -1;
 };
 
 bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ float & length,
 	UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
 	vector<Page*>& Ps, vector<Page*>& Vs,
 	vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns, 
-	vector<Page*>& Rels, UT_Lock& lock, traceStat& res);
+	vector<Page*>& Rels, vector<Page*>& Gs, UT_Lock& lock, traceStat& res);
 
-bool trace_orig(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ float & length,
-		UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
-		vector<Page*>& Ps, vector<Page*>& Vs,
-		//vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns, 
-		vector<Page*>& Rels, UT_Lock& lock, traceStat& res);
+//bool trace_orig(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ float & length,
+//		UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
+//		vector<Page*>& Ps, vector<Page*>& Vs,
+//		//vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns, 
+//		vector<Page*>& Rels, UT_Lock& lock, traceStat& res);
 
 Page* getExpandedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
-bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV);
-Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
+Page* getExtrapolatedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
+
+//bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV);
+//Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name);
 
 bool declareEntity(vector<Patch*>& PEBBLE, UT_String name);
 bool applyProxy(vector<Patch*>& PEBBLE, UT_String name);

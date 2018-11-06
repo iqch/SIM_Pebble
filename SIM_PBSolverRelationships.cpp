@@ -44,6 +44,8 @@ SIM_Solver::SIM_Result SIM_PBSolverRelationships::solveSingleObjectSubclass(SIM_
 		return SIM_SOLVER_FAIL;
 	};
 
+	// RELATTR
+	for (Patch* pb : m_pebble->m_P) pb->declarePage(m_relAttr);
 
 	// RELATIONSHIPS
 

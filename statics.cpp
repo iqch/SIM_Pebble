@@ -22,6 +22,10 @@ PRM_Range theUpperRng(PRM_RANGE_FREE, -0.5, PRM_RANGE_FREE, 0.5);
 
 PRM_Name	 theTimestepName(SIM_NAME_TIMESTEP, "Timestep");
 PRM_Default theTimestepDef(0, "1.0/$FPS");
+
+PRM_Name	 theMinMagnitudeName(SIM_NAME_MINMAGNITUDE, "MinMagnitude");
+PRM_Default theMinMagnitudeDef(1e-4, "");
+
 PRM_Name	 theAmountName(SIM_NAME_AMOUNT, "Amount");
 PRM_Name	 theSeedName(SIM_NAME_SEED, "Seed");
 

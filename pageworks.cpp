@@ -222,10 +222,9 @@ Page& Page::operator=(const Page& src)
 Page::Page()
 {
 	// SHOULD NOT BE!
-	const char* MSG = "SHOULD NOT TO HAPPEN!";
+	const char* MSG = "SHOULD NOT HAPPEN!";
 
 	throw(MSG);
-
 };
 
 // PATCH
@@ -291,8 +290,8 @@ void Patch::declarePage(const UT_String& name)
 	chs.append(name);
 
 	if (name == "N") m_N = _p;
-	if (name == "dpdu") m_DPDU = _p;
-	if (name == "dpdv") m_DPDV = _p;
+	if (name == "dPdu") m_DPDU = _p;
+	if (name == "dPdv") m_DPDV = _p;
 };
 
 Page& Patch::getPrimVar(const UT_String& name)
@@ -397,74 +396,125 @@ int Patch::reflect(int id) const
 	return -1;
 };
 
-UT_Vector3 Patch::project(UT_Vector3 V, int i, int j)
+UT_Vector3 Patch::project(UT_Vector3 V, int i, int j) const
 {
-	UT_Vector3 RES(0, 0, 0);
+	UT_Vector3 RES = V;
 
 	if (m_N == NULL) return RES;
-	if (m_DPDU == NULL) return RES;
-	if (m_DPDV == NULL) return RES;
+	//if (m_DPDU == NULL) return RES;
+	//if (m_DPDV == NULL) return RES;
 
 	UT_Vector3 n = m_N->get(i, j);
-	UT_Vector3 dPdu = m_DPDU->get(i, j);
-	UT_Vector3 dPdv = m_DPDV->get(i, j);
+	//UT_Vector3 dPdu = m_DPDU->get(i, j);
+	//UT_Vector3 dPdv = m_DPDV->get(i, j);
 
-	RES[2] = n.dot(V);
+	RES -= n*n.dot(V);
 
-	UT_Vector3 _V = V - n*RES[2];
+	//UT_Vector3 _V = V - n*RES[2];
 
-	RES[0] = _V.dot(dPdu);
+	//RES[0] = _V.dot(dPdu);
 
-	dPdv -= dPdv.dot(dPdu)*dPdu;
-	dPdv.normalize();
+	//dPdv -= dPdv.dot(dPdu)*dPdu;
+	//dPdv.normalize();
 
-	RES[1] = _V.dot(dPdv);
+	//RES[1] = _V.dot(dPdv);
 
 	return RES;
 };
 
-UT_Vector3 Patch::project(UT_Vector3 V, UT_Vector3 UV)
+UT_Vector3 Patch::project(UT_Vector3 V, UT_Vector3 UV) const
 {
-	UT_Vector3 RES(0, 0, 0);
+	UT_Vector3 RES = V;
 
 	if (m_N == NULL) return RES;
-	if (m_DPDU == NULL) return RES;
-	if (m_DPDV == NULL) return RES;
+	//if (m_DPDU == NULL) return RES;
+	//if (m_DPDV == NULL) return RES;
+
+	UT_Vector3 n = m_N->get(UV);
+	//UT_Vector3 dPdu = m_DPDU->get(UV);
+	//UT_Vector3 dPdv = m_DPDV->get(UV);
+
+	RES -= n*n.dot(V);
+
+	//UT_Vector3 _V = V - n*RES[2];
+
+	//RES[0] = _V.dot(dPdu);
+
+	//dPdv -= dPdv.dot(dPdu)*dPdu;
+	//dPdv.normalize();
+
+	//RES[1] = _V.dot(dPdv);
+
+	return RES;
+};
+
+UT_Vector3 Patch::composite(UT_Vector3 V, int i, int j) const
+{
+	if (m_N == NULL) return V;
+	if (m_DPDU == NULL) return V;
+	if (m_DPDV == NULL) return V;
+
+	UT_Vector3 n = m_N->get(i,j);
+	UT_Vector3 dPdu = m_DPDU->get(i,j);
+	UT_Vector3 dPdv = m_DPDV->get(i,j);
+
+	return dPdu*V[0] + dPdv*V[1] + n*V[2];
+};
+
+UT_Vector3 Patch::composite(UT_Vector3 V, UT_Vector3 UV) const
+{
+	if (m_N == NULL) return V;
+	if (m_DPDU == NULL) return V;
+	if (m_DPDV == NULL) return V;
 
 	UT_Vector3 n = m_N->get(UV);
 	UT_Vector3 dPdu = m_DPDU->get(UV);
 	UT_Vector3 dPdv = m_DPDV->get(UV);
 
-	RES[2] = n.dot(V);
+	return dPdu*V[0] + dPdv*V[1] + n*V[2];
+};
 
-	UT_Vector3 _V = V - n*RES[2];
+UT_Vector2 Patch::decompose(UT_Vector3 V, UT_Vector3 UV) const
+{
+	UT_Vector2 RES(0, 0);
 
-	RES[0] = _V.dot(dPdu);
+	if (m_DPDU == NULL) return RES;
+	if (m_DPDV == NULL) return RES;
 
-	dPdv -= dPdv.dot(dPdu)*dPdu;
-	dPdv.normalize();
+	UT_Vector3 dpdu = m_DPDU->get(UV);
+	UT_Vector3 dpdv = m_DPDV->get(UV);
 
-	RES[1] = _V.dot(dPdv);
+	float M = dpdv.dot(dpdu);
+
+	float vu = V.dot(dpdu);
+	float vv = V.dot(dpdv);
+
+	RES[0] = vu - vv*M;
+	RES[1] = vv - vu*M;
+	RES /= 1 - M*M;
 
 	return RES;
 };
 
-UT_Vector3 Patch::composite(UT_Vector3 V, UT_Vector3 UV)
+UT_Vector2 Patch::decompose(UT_Vector3 V, int i, int j) const
 {
-	UT_Vector3 RES(0, 0, 0);
+	UT_Vector2 RES(0, 0);
 
-	if (m_N == NULL) return RES;
 	if (m_DPDU == NULL) return RES;
 	if (m_DPDV == NULL) return RES;
 
-	UT_Vector3 n = m_N->get(UV);
-	UT_Vector3 dPdu = m_DPDU->get(UV);
+	UT_Vector3 dpdu = m_DPDU->get(i,j);
+	UT_Vector3 dpdv = m_DPDV->get(i,j);
 
-	UT_Vector3 dPdv = m_DPDV->get(UV);
-	dPdv -= dPdv.dot(dPdu)*dPdu;
-	dPdv.normalize();
+	float M = dpdv.dot(dpdu);
 
-	RES = dPdu*V[0] + dPdv*V[1] + n*V[2];
+	float vu = V.dot(dpdu);
+	float vv = V.dot(dpdv);
+
+	RES[0] = vu - vv*M;
+	RES[1] = vv - vu*M;
+	RES /= 1 - M*M;
+
 	return RES;
 };
 
@@ -939,7 +989,7 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
 	vector<Page*>& Ps, vector<Page*>& Vs,
 	vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns,
-	vector<Page*>& Rels,
+	vector<Page*>& Rels, vector<Page*>& Gs,
 	UT_Lock& lock, traceStat& stat)
 {
 	if (stat.max_deep < 0)
@@ -954,7 +1004,6 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	M[2] = UT_Matrix2F(0, 1, -1, 0);
 	M[3] = UT_Matrix2F(1);
 
-
 	const Patch& pb = *PEBBLE[coords[2]];
 
 	Page* _P = NULL;
@@ -963,19 +1012,20 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	Page* _DPDV = NULL;
 	Page* _N = NULL;
 	Page* _RELS = NULL;
+	Page* _GS = NULL;
 
 	lock.lock();
 	{
-		if (Ps[pb.id] == NULL) Ps[pb.id] = getExpandedPrimVar(PEBBLE, pb, "P");
+		if (Ps[pb.id] == NULL) Ps[pb.id] = getExtrapolatedPrimVar(PEBBLE, pb, "P");
 		_P = Ps[pb.id];
 
-		if (Vs[pb.id] == NULL) Vs[pb.id] = getExpandedPrimVarProjected(PEBBLE, pb, "v");
+		if (Vs[pb.id] == NULL) Vs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "v");
 		_V = Vs[pb.id];
 
-		if (dPdUs[pb.id] == NULL) dPdUs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdu");
+		if (dPdUs[pb.id] == NULL) dPdUs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdu"); // SHOULD PROJECT?
 		_DPDU = dPdUs[pb.id];
 
-		if (dPdVs[pb.id] == NULL) dPdVs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdv");
+		if (dPdVs[pb.id] == NULL) dPdVs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdv"); // SHOULD PROJECT?
 		_DPDV = dPdVs[pb.id];
 
 		if (Ns[pb.id] == NULL) Ns[pb.id] = getExpandedPrimVar(PEBBLE, pb, "N");
@@ -983,6 +1033,9 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 
 		if (Rels[pb.id] == NULL) Rels[pb.id] = getExpandedPrimVar(PEBBLE, pb, "rel");
 		_RELS = Rels[pb.id];
+
+		if (Gs[pb.id] == NULL) Gs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "g");
+		_GS = Gs[pb.id];
 	}
 	lock.unlock();
 
@@ -992,87 +1045,54 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	const Page& PDV = *_DPDV;
 	const Page& N = *_N;
 	const Page& REL = *_RELS;
-
+	const Page& G = *_GS;
 
 	// TRACE
-
 	bool go = true;
 
 	UT_Vector3 UV = coords;
 
 	UT_Vector3 O = PP.get(UV);
 
-	//UT_Vector2 D; // = d; D.normalize();
-
 	UT_Vector3 C;
 
-	//vector<float> Q(2);
-	//vector<int>	  DD(2);
-	//vector<float> dd(2);
-
-	//UT_Vector3 UV_Orig = UV;
-
-	//UT_Vector3 v;
-
-	//UT_Vector3 dpdu;
-	//UT_Vector3 dpdv;
-
-	//UT_Vector3 n = dpdu;
+	float du = 1.0 / pb.dim[0];
+	float dv = 1.0 / pb.dim[1];
 
 	do
 	{
 		// MOVE AHEAD
 		UT_Vector3 UV_Orig = UV;
 
+		UT_Vector3 g = G.get(UV);
+
 		// DIRECTION
 		UT_Vector3 v = PV.get(UV);
 
-		//UT_Vector3 dpdu = PDU.get(UV); dpdu.normalize();
-		//UT_Vector3 dpdv = PDV.get(UV); dpdv.normalize();
+		//UT_Vector3 dpdu = PDU.get(UV); //dpdu.normalize();
+		//UT_Vector3 dpdv = PDV.get(UV); //dpdv.normalize();
 
-		//UT_Vector3 n = N.get(UV); n.normalize();
-		//n.cross(dpdv);
+		// ...INSTEAD OF PP.cross(UV, D, C); USING MINIMAL CROSSING TIMING 
 
-		//v -= n*n.dot(v);
+		if (stat.back) v *= -1;
 
-		UT_Vector2 D(v[0], v[1]);
+		float dt = 0;
 
-		//D[0] = v.dot(dpdu);
-		//D[1] = v.dot(dpdv);
-		D.normalize();
+		UT_Vector2 _V = pb.decompose(v, UV);
 
-		// ...SHOULD ALTER NORMALIZATION PROCEDURE IN ACCOUNT WITH SKEW
+		float tu = int(UV[0] * pb.dim[0])*du + (_V[0] > 0 ? du : -0.0000001);
+		float tv = int(UV[1] * pb.dim[1])*dv + (_V[1] > 0 ? dv : -0.0000001);
 
-		//int smm = 0;
+		float dtu = _V[0] == 0 ? 1000000 : (tu - UV[0])*g[0] / _V[0];
+		float dtv = _V[1] == 0 ? 1000000 : (tv - UV[1])*g[1] / _V[1];
 
-		//D[0] = 0; D[1] = 0;
+		dt = min(dtu, dtv);
 
-		//float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-		//if (detxy != 0)
-		//{
-		//	smm++;
+		UV[0] += _V[0] / g[0] * dt;
+		UV[1] += _V[1] / g[1] * dt;
 
-		//	float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-		//	float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-		//	D[0] += dU / detxy; D[1] += dV / detxy;
-		//};
+		C = UT_Vector3(0, 0, 1);
 
-		//// ...OTHER SIDES
-		////float detxz = dpdu[0] * dpdv[2] - dpdu[2] * dpdv[0];
-		////float detyz = dpdu[1] * dpdv[2] - dpdu[2] * dpdv[1];
-
-		//if (smm == 0)
-		//{
-		//	stat.state = 5;
-		//	return false;
-		//};
-
-		//D[0] /= smm; D[1] /= smm;
-		//D.normalize();
-
-		if (stat.back) D *= -1;
-
-		PP.cross(UV, D, C);
 		UV[2] = pb.id;
 
 		// STOP CONDITIONS
@@ -1080,6 +1100,8 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 		if (UV[1] <= 0) { UV[1] = 0; go = false; };
 		if (UV[0] >= 1) { UV[0] = 1; go = false; };
 		if (UV[1] >= 1) { UV[1] = 1; go = false; };
+
+		if(go == false) C = UT_Vector3(0, 0, 1);
 
 		// RECALC LENGTH
 		UT_Vector3 _O = PP.get(UV);
@@ -1290,7 +1312,7 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 		path, colors,
 		Ps, Vs,
 		dPdUs, dPdVs, Ns,
-		Rels,
+		Rels, Gs,
 		lock, stat);
 
 	if (!result)
@@ -1301,371 +1323,371 @@ bool trace(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ fl
 	return true;
 };
 
-bool trace_orig(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ float & length,
-	UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
-	vector<Page*>& Ps, vector<Page*>& Vs,
-	//vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns,
-	vector<Page*>& Rels,
-	UT_Lock& lock, traceStat& stat)
-{
-	if (stat.max_deep < 0)
-	{
-		stat.state = 1;
-		return false;
-	};
-
-	UT_Matrix2FArray M(4);
-	M[0] = UT_Matrix2F(0, -1, 1, 0);
-	M[1] = UT_Matrix2F(-1, 0, 0, -1);
-	M[2] = UT_Matrix2F(0, 1, -1, 0);
-	M[3] = UT_Matrix2F(1);
-
-
-	const Patch& pb = *PEBBLE[coords[2]];
-
-	Page* _P = NULL;
-	Page* _V = NULL;
-	//Page* _DPDU = NULL;
-	//Page* _DPDV = NULL;
-	//Page* _N = NULL;
-	Page* _RELS = NULL;
-
-	lock.lock();
-	{
-		if (Ps[pb.id] == NULL) Ps[pb.id] = getExpandedPrimVar(PEBBLE, pb, "P");
-		_P = Ps[pb.id];
-
-		if (Vs[pb.id] == NULL) Vs[pb.id] = getExpandedPrimVarProjected(PEBBLE, pb, "v");
-		_V = Vs[pb.id];
-
-		//if (dPdUs[pb.id] == NULL) dPdUs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdu", true);
-		//_DPDU = dPdUs[pb.id];
-
-		//if (dPdVs[pb.id] == NULL) dPdVs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdv", true);
-		//_DPDV = dPdVs[pb.id];
-
-		//if (Ns[pb.id] == NULL) Ns[pb.id] = getExpandedPrimVar(PEBBLE, pb, "N");
-		//_N = Ns[pb.id];
-
-		if (Rels[pb.id] == NULL) Rels[pb.id] = getExpandedPrimVar(PEBBLE, pb, "rel");
-		_RELS = Rels[pb.id];
-	}
-	lock.unlock();
-
-	const Page& PP = *_P;
-	const Page& PV = *_V;
-	//const Page& PDU = *_DPDU;
-	//const Page& PDV = *_DPDV;
-	//const Page& N = *_N;
-	const Page& REL = *_RELS;
-
-
-	// TRACE
-
-	bool go = true;
-
-	UT_Vector3 UV = coords;
-
-	UT_Vector3 O = PP.get(UV);
-
-	//UT_Vector2 D; // = d; D.normalize();
-
-	UT_Vector3 C;
-
-	//vector<float> Q(2);
-	//vector<int>	  DD(2);
-	//vector<float> dd(2);
-
-	//UT_Vector3 UV_Orig = UV;
-
-	//UT_Vector3 v;
-
-	//UT_Vector3 dpdu;
-	//UT_Vector3 dpdv;
-
-	//UT_Vector3 n = dpdu;
-
-	do
-	{
-		// MOVE AHEAD
-		UT_Vector3 UV_Orig = UV;
-
-		// DIRECTION
-		UT_Vector3 v = PV.get(UV);
-
-		//UT_Vector3 dpdu = PDU.get(UV); dpdu.normalize();
-		//UT_Vector3 dpdv = PDV.get(UV); dpdv.normalize();
-
-		//UT_Vector3 n = N.get(UV); n.normalize();
-		//n.cross(dpdv);
-
-		//v -= n*n.dot(v);
-
-		UT_Vector2 D(v[0],v[1]);
-
-		//D[0] = v.dot(dpdu);
-		//D[1] = v.dot(dpdv);
-		D.normalize();
-
-		// ...SHOULD ALTER NORMALIZATION PROCEDURE IN ACCOUNT WITH SKEW
-
-		//int smm = 0;
-
-		//D[0] = 0; D[1] = 0;
-
-		//float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-		//if (detxy != 0)
-		//{
-		//	smm++;
-
-		//	float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-		//	float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-		//	D[0] += dU / detxy; D[1] += dV / detxy;
-		//};
-
-		//// ...OTHER SIDES
-		////float detxz = dpdu[0] * dpdv[2] - dpdu[2] * dpdv[0];
-		////float detyz = dpdu[1] * dpdv[2] - dpdu[2] * dpdv[1];
-
-		//if (smm == 0)
-		//{
-		//	stat.state = 5;
-		//	return false;
-		//};
-
-		//D[0] /= smm; D[1] /= smm;
-		//D.normalize();
-
-		if (stat.back) D *= -1;
-
-		PP.cross(UV, D, C);
-		UV[2] = pb.id;
-
-		// STOP CONDITIONS
-		if (UV[0] <= 0) { UV[0] = 0; go = false; };
-		if (UV[1] <= 0) { UV[1] = 0; go = false; };
-		if (UV[0] >= 1) { UV[0] = 1; go = false; };
-		if (UV[1] >= 1) { UV[1] = 1; go = false; };
-
-		// RECALC LENGTH
-		UT_Vector3 _O = PP.get(UV);
-		float dl = (_O - O).length();
-
-		if (dl == 0)
-		{
-			stat.state = 2;
-			return false;
-		}
-
-		if (length < dl)
-		{
-			dl = length / dl;
-
-			UV = UV*dl + UV_Orig*(1 - dl);
-
-			UV[2] = pb.id;
-
-
-			path.append(UV);
-			colors.append(UT_Vector3(1, 0, 1)); //C);
-
-			return true;
-		};
-
-		length -= dl;
-
-		// BACK UV
-
-		path.append(UV);
-		colors.append(UT_Vector3(0, 0, 1)); //C);
-
-		if (path.size() > stat.max_path)
-		{
-			stat.state = 3;
-			return false;
-		};
-
-		if (REL.get(UV)[1] != 0)
-		{
-			return true;
-		}
-
-		// RECALC CONDITIONS
-		O = _O;
-
-
-	} while (go);
-
-	//return true;
-
-	float U = UV[0];
-	float V = UV[1];
-
-	int ref = -1;
-
-	if (V == 0) ref = 0;
-	if (U == 1) ref = 1;
-	if (V == 1) ref = 2;
-	if (U == 0) ref = 3;
-
-	int rref = pb.f[ref];
-
-	// BOUNDARY?
-	if (rref == -1)
-	{
-		return true;
-	}
-
-	UV[2] = rref;
-
-	const Patch& pbb = *PEBBLE[rref];
-
-	//float DU = du, DV = dv;
-
-	int pref = pbb.reflect(pb.id);
-
-	//UT_Vector2 _D = D;
-
-	// 0
-	if (ref == 0)
-	{
-		if (pref == 0)
-		{
-			UV[0] = 1 - U;
-			UV[1] = 0;
-			//D[0] = -_D[0];
-			//D[1] = -_D[1];
-		};
-		if (pref == 1)
-		{
-			UV[0] = 1;
-			UV[1] = 1 - U;
-			//D[0] = _D[1];
-			//D[1] = -_D[0];
-		};
-		if (pref == 2)
-		{
-			UV[1] = 1;
-		};
-		if (pref == 3)
-		{
-			UV[0] = 0;
-			UV[1] = U;
-			//D[0] = -_D[1];
-			//D[1] = _D[0];
-		};
-	};
-
-	// 1
-	if (ref == 1)
-	{
-		if (pref == 0)
-		{
-			UV[0] = 1 - V;
-			UV[1] = 0;
-			//D[0] = -_D[1];
-			//D[1] = _D[0];
-		};
-		if (pref == 1)
-		{
-			UV[0] = 1;
-			UV[1] = 1 - V;
-			//D[0] = -_D[0];
-			//D[1] = -_D[1];
-		};
-		if (pref == 2)
-		{
-			UV[0] = V;
-			UV[1] = 1;
-			//D[0] = _D[1];
-			//D[1] = -_D[0];
-		};
-		if (pref == 3)
-		{
-			UV[0] = 0;
-		};
-	};
-
-	// 2
-	if (ref == 2)
-	{
-		if (pref == 0)
-		{
-			UV[1] = 0;
-		};
-		if (pref == 1)
-		{
-			UV[0] = 1;
-			UV[1] = U;
-			//D[0] = -_D[1];
-			//D[1] = _D[0];
-		};
-		if (pref == 2)
-		{
-			UV[0] = 1 - U;
-			UV[1] = 1;
-			//D[0] = -_D[1];
-			//D[1] = -_D[0];
-		};
-		if (pref == 3)
-		{
-			UV[0] = 0;
-			UV[1] = 1 - U;
-			//D[0] = -_D[1];
-			//D[1] = _D[0];
-		};
-	};
-
-	// 3
-	if (ref == 3)
-	{
-		if (pref == 0)
-		{
-			UV[0] = V;
-			UV[1] = 0;
-			//D[0] = _D[1];
-			//D[1] = -_D[0];
-		};
-		if (pref == 1)
-		{
-			UV[0] = 1;
-		};
-		if (pref == 2)
-		{
-			UV[0] = 1 - V;
-			UV[1] = 1;
-			//D[0] = _D[1];
-			//D[1] = -_D[0];
-		};
-		if (pref == 3)
-		{
-			UV[0] = 0;
-			UV[1] = 1 - V;
-			//D[0] = -_D[0];
-			//D[1] = -_D[1];
-		};
-	};
-
-	stat.max_deep--;
-
-	UT_Matrix2F& MM = M[CASE[pref * 4 + ref]];
-
-	stat.w *= MM;
-
-	bool result = trace_orig(PEBBLE, UV, length,
-		path, colors,
-		Ps, Vs,
-		//dPdUs, dPdVs, Ns,
-		Rels,
-		lock, stat);
-
-	if (!result)
-	{
-		return false;
-	};
-
-	return true;
-};
+//bool trace_orig(const vector<Patch*>& PEBBLE, UT_Vector3 coords, /*UT_Vector2 d,*/ float & length,
+//	UT_Vector3Array & path, UT_Vector3Array & colors, //UT_Vector3Array & normals,
+//	vector<Page*>& Ps, vector<Page*>& Vs,
+//	//vector<Page*>& dPdUs, vector<Page*>& dPdVs, vector<Page*>& Ns,
+//	vector<Page*>& Rels,
+//	UT_Lock& lock, traceStat& stat)
+//{
+//	if (stat.max_deep < 0)
+//	{
+//		stat.state = 1;
+//		return false;
+//	};
+//
+//	UT_Matrix2FArray M(4);
+//	M[0] = UT_Matrix2F(0, -1, 1, 0);
+//	M[1] = UT_Matrix2F(-1, 0, 0, -1);
+//	M[2] = UT_Matrix2F(0, 1, -1, 0);
+//	M[3] = UT_Matrix2F(1);
+//
+//
+//	const Patch& pb = *PEBBLE[coords[2]];
+//
+//	Page* _P = NULL;
+//	Page* _V = NULL;
+//	//Page* _DPDU = NULL;
+//	//Page* _DPDV = NULL;
+//	//Page* _N = NULL;
+//	Page* _RELS = NULL;
+//
+//	lock.lock();
+//	{
+//		if (Ps[pb.id] == NULL) Ps[pb.id] = getExpandedPrimVar(PEBBLE, pb, "P");
+//		_P = Ps[pb.id];
+//
+//		if (Vs[pb.id] == NULL) Vs[pb.id] = getExpandedPrimVarProjected(PEBBLE, pb, "v");
+//		_V = Vs[pb.id];
+//
+//		//if (dPdUs[pb.id] == NULL) dPdUs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdu", true);
+//		//_DPDU = dPdUs[pb.id];
+//
+//		//if (dPdVs[pb.id] == NULL) dPdVs[pb.id] = getExpandedPrimVar(PEBBLE, pb, "dPdv", true);
+//		//_DPDV = dPdVs[pb.id];
+//
+//		//if (Ns[pb.id] == NULL) Ns[pb.id] = getExpandedPrimVar(PEBBLE, pb, "N");
+//		//_N = Ns[pb.id];
+//
+//		if (Rels[pb.id] == NULL) Rels[pb.id] = getExpandedPrimVar(PEBBLE, pb, "rel");
+//		_RELS = Rels[pb.id];
+//	}
+//	lock.unlock();
+//
+//	const Page& PP = *_P;
+//	const Page& PV = *_V;
+//	//const Page& PDU = *_DPDU;
+//	//const Page& PDV = *_DPDV;
+//	//const Page& N = *_N;
+//	const Page& REL = *_RELS;
+//
+//
+//	// TRACE
+//
+//	bool go = true;
+//
+//	UT_Vector3 UV = coords;
+//
+//	UT_Vector3 O = PP.get(UV);
+//
+//	//UT_Vector2 D; // = d; D.normalize();
+//
+//	UT_Vector3 C;
+//
+//	//vector<float> Q(2);
+//	//vector<int>	  DD(2);
+//	//vector<float> dd(2);
+//
+//	//UT_Vector3 UV_Orig = UV;
+//
+//	//UT_Vector3 v;
+//
+//	//UT_Vector3 dpdu;
+//	//UT_Vector3 dpdv;
+//
+//	//UT_Vector3 n = dpdu;
+//
+//	do
+//	{
+//		// MOVE AHEAD
+//		UT_Vector3 UV_Orig = UV;
+//
+//		// DIRECTION
+//		UT_Vector3 v = PV.get(UV);
+//
+//		//UT_Vector3 dpdu = PDU.get(UV); dpdu.normalize();
+//		//UT_Vector3 dpdv = PDV.get(UV); dpdv.normalize();
+//
+//		//UT_Vector3 n = N.get(UV); n.normalize();
+//		//n.cross(dpdv);
+//
+//		//v -= n*n.dot(v);
+//
+//		UT_Vector2 D(v[0],v[1]);
+//
+//		//D[0] = v.dot(dpdu);
+//		//D[1] = v.dot(dpdv);
+//		D.normalize();
+//
+//		// ...SHOULD ALTER NORMALIZATION PROCEDURE IN ACCOUNT WITH SKEW
+//
+//		//int smm = 0;
+//
+//		//D[0] = 0; D[1] = 0;
+//
+//		//float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//		//if (detxy != 0)
+//		//{
+//		//	smm++;
+//
+//		//	float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//		//	float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//		//	D[0] += dU / detxy; D[1] += dV / detxy;
+//		//};
+//
+//		//// ...OTHER SIDES
+//		////float detxz = dpdu[0] * dpdv[2] - dpdu[2] * dpdv[0];
+//		////float detyz = dpdu[1] * dpdv[2] - dpdu[2] * dpdv[1];
+//
+//		//if (smm == 0)
+//		//{
+//		//	stat.state = 5;
+//		//	return false;
+//		//};
+//
+//		//D[0] /= smm; D[1] /= smm;
+//		//D.normalize();
+//
+//		if (stat.back) D *= -1;
+//
+//		PP.cross(UV, D, C);
+//		UV[2] = pb.id;
+//
+//		// STOP CONDITIONS
+//		if (UV[0] <= 0) { UV[0] = 0; go = false; };
+//		if (UV[1] <= 0) { UV[1] = 0; go = false; };
+//		if (UV[0] >= 1) { UV[0] = 1; go = false; };
+//		if (UV[1] >= 1) { UV[1] = 1; go = false; };
+//
+//		// RECALC LENGTH
+//		UT_Vector3 _O = PP.get(UV);
+//		float dl = (_O - O).length();
+//
+//		if (dl == 0)
+//		{
+//			stat.state = 2;
+//			return false;
+//		}
+//
+//		if (length < dl)
+//		{
+//			dl = length / dl;
+//
+//			UV = UV*dl + UV_Orig*(1 - dl);
+//
+//			UV[2] = pb.id;
+//
+//
+//			path.append(UV);
+//			colors.append(UT_Vector3(1, 0, 1)); //C);
+//
+//			return true;
+//		};
+//
+//		length -= dl;
+//
+//		// BACK UV
+//
+//		path.append(UV);
+//		colors.append(UT_Vector3(0, 0, 1)); //C);
+//
+//		if (path.size() > stat.max_path)
+//		{
+//			stat.state = 3;
+//			return false;
+//		};
+//
+//		if (REL.get(UV)[1] != 0)
+//		{
+//			return true;
+//		}
+//
+//		// RECALC CONDITIONS
+//		O = _O;
+//
+//
+//	} while (go);
+//
+//	//return true;
+//
+//	float U = UV[0];
+//	float V = UV[1];
+//
+//	int ref = -1;
+//
+//	if (V == 0) ref = 0;
+//	if (U == 1) ref = 1;
+//	if (V == 1) ref = 2;
+//	if (U == 0) ref = 3;
+//
+//	int rref = pb.f[ref];
+//
+//	// BOUNDARY?
+//	if (rref == -1)
+//	{
+//		return true;
+//	}
+//
+//	UV[2] = rref;
+//
+//	const Patch& pbb = *PEBBLE[rref];
+//
+//	//float DU = du, DV = dv;
+//
+//	int pref = pbb.reflect(pb.id);
+//
+//	//UT_Vector2 _D = D;
+//
+//	// 0
+//	if (ref == 0)
+//	{
+//		if (pref == 0)
+//		{
+//			UV[0] = 1 - U;
+//			UV[1] = 0;
+//			//D[0] = -_D[0];
+//			//D[1] = -_D[1];
+//		};
+//		if (pref == 1)
+//		{
+//			UV[0] = 1;
+//			UV[1] = 1 - U;
+//			//D[0] = _D[1];
+//			//D[1] = -_D[0];
+//		};
+//		if (pref == 2)
+//		{
+//			UV[1] = 1;
+//		};
+//		if (pref == 3)
+//		{
+//			UV[0] = 0;
+//			UV[1] = U;
+//			//D[0] = -_D[1];
+//			//D[1] = _D[0];
+//		};
+//	};
+//
+//	// 1
+//	if (ref == 1)
+//	{
+//		if (pref == 0)
+//		{
+//			UV[0] = 1 - V;
+//			UV[1] = 0;
+//			//D[0] = -_D[1];
+//			//D[1] = _D[0];
+//		};
+//		if (pref == 1)
+//		{
+//			UV[0] = 1;
+//			UV[1] = 1 - V;
+//			//D[0] = -_D[0];
+//			//D[1] = -_D[1];
+//		};
+//		if (pref == 2)
+//		{
+//			UV[0] = V;
+//			UV[1] = 1;
+//			//D[0] = _D[1];
+//			//D[1] = -_D[0];
+//		};
+//		if (pref == 3)
+//		{
+//			UV[0] = 0;
+//		};
+//	};
+//
+//	// 2
+//	if (ref == 2)
+//	{
+//		if (pref == 0)
+//		{
+//			UV[1] = 0;
+//		};
+//		if (pref == 1)
+//		{
+//			UV[0] = 1;
+//			UV[1] = U;
+//			//D[0] = -_D[1];
+//			//D[1] = _D[0];
+//		};
+//		if (pref == 2)
+//		{
+//			UV[0] = 1 - U;
+//			UV[1] = 1;
+//			//D[0] = -_D[1];
+//			//D[1] = -_D[0];
+//		};
+//		if (pref == 3)
+//		{
+//			UV[0] = 0;
+//			UV[1] = 1 - U;
+//			//D[0] = -_D[1];
+//			//D[1] = _D[0];
+//		};
+//	};
+//
+//	// 3
+//	if (ref == 3)
+//	{
+//		if (pref == 0)
+//		{
+//			UV[0] = V;
+//			UV[1] = 0;
+//			//D[0] = _D[1];
+//			//D[1] = -_D[0];
+//		};
+//		if (pref == 1)
+//		{
+//			UV[0] = 1;
+//		};
+//		if (pref == 2)
+//		{
+//			UV[0] = 1 - V;
+//			UV[1] = 1;
+//			//D[0] = _D[1];
+//			//D[1] = -_D[0];
+//		};
+//		if (pref == 3)
+//		{
+//			UV[0] = 0;
+//			UV[1] = 1 - V;
+//			//D[0] = -_D[0];
+//			//D[1] = -_D[1];
+//		};
+//	};
+//
+//	stat.max_deep--;
+//
+//	UT_Matrix2F& MM = M[CASE[pref * 4 + ref]];
+//
+//	stat.w *= MM;
+//
+//	bool result = trace_orig(PEBBLE, UV, length,
+//		path, colors,
+//		Ps, Vs,
+//		//dPdUs, dPdVs, Ns,
+//		Rels,
+//		lock, stat);
+//
+//	if (!result)
+//	{
+//		return false;
+//	};
+//
+//	return true;
+//};
 
 //Page* getExpandedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name)
 //{
@@ -2087,306 +2109,26 @@ Page* getExpandedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_Stri
 	return _P;
 };
 
-bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV)
-{
-	float A[4] = { M_PI_2, M_PI, M_PI+M_PI_2, 0};
+#define clamp_i(x,a,b) x < a ? a : (x > b ? b : x)
 
-	const Page& dPdu = pb.getPrimVar("dPdu");
-	const Page& dPdv = pb.getPrimVar("dPdv");
-	//const Page& N = pb.getPrimVar("N");
-
-	// CORE
-	for (int i = 0; i < pb.dim[0]; i++)
-		for (int j = 0; j < pb.dim[1]; j++)
-		{
-			DPDU->get(i + 1, j + 1) = dPdu.get(i, j);
-			DPDV->get(i + 1, j + 1) = dPdv.get(i, j);
-		};
-
-	// SIDES
-	int xs[4] = { 1,	pb.dim[0] + 1,	pb.dim[0],	0 };
-	int ys[4] = { 0,	1,			pb.dim[1] + 1,	pb.dim[1] };
-
-	int dxs[4] = { 1,0,-1,0 };
-	int dys[4] = { 0,1,0,-1 };
-
-	int sl[4] = { pb.dim[0],pb.dim[1],pb.dim[0],pb.dim[1] };
-
-	int ddx[4] = { 0,-1,0,1 };
-	int ddy[4] = { 1,0,-1,0 };
-
-	int id = pb.id;
-
-	for (int S = 0; S < 4; S++)
-	{
-		int mark = pb.f[S];
-		if (mark != -1)
-		{
-			const Patch& PP = *PEBBLE[pb.f[S]];
-
-			int x0 = xs[S];
-			int y0 = ys[S];
-			int dx = dxs[S];
-			int dy = dys[S];
-
-			int X0, Y0, DX, DY;
-
-			if (PP.f[0] == id)
-			{
-				X0 = PP.dim[0] - 1;
-				Y0 = 0;
-				DX = -1;
-				DY = 0;
-			};
-
-			if (PP.f[1] == id)
-			{
-				X0 = PP.dim[0] - 1;
-				Y0 = PP.dim[1] - 1;
-				DX = 0;
-				DY = -1;
-			};
-
-			if (PP.f[2] == id)
-			{
-				X0 = 0;
-				Y0 = PP.dim[1] - 1;
-				DX = 1;
-				DY = 0;
-			};
-
-			if (PP.f[3] == id)
-			{
-				X0 = 0;
-				Y0 = 0;
-				DX = 0;
-				DY = 1;
-			};
-
-			int X = X0;
-			int Y = Y0;
-
-			int x = x0;
-			int y = y0;
-
-			const Page& dPdu = PP.getPrimVar("dPdu");
-			const Page& dPdv = PP.getPrimVar("dPdv");
-			const Page& N = PP.getPrimVar("N");
-
-			int CS = S * 4 + PP.reflect(id);
-			float a = A[CASE[CS]];
-
-			UT_QuaternionF Q;
-
-			for (int i = 0; i < sl[S]; i++)
-			{
-				UT_Vector3 dpdu = dPdu.get(X, Y);
-				UT_Vector3 dpdv = dPdv.get(X, Y);
-
-				UT_Vector3 n = N.get(X, Y);
-
-				Q.updateFromAngleAxis(a, n);
-
-				DPDU->get(x, y) = Q.rotate(dpdu);;
-				DPDV->get(x, y) = Q.rotate(dpdv);
-
-				X += DX; Y += DY;
-				x += dx;
-				y += dy;
-			};
-		}
-		else // MARK == -1
-		{
-			int x0 = xs[S];
-			int y0 = ys[S];
-			int dx = dxs[S];
-			int dy = dys[S];
-
-			int x = x0;
-			int y = y0;
-
-			// JUST COPY ROW
-			for (int i = 0; i < sl[S]; i++)
-			{
-				DPDU->get(x, y) = DPDU->get(x + ddx[S], y + ddy[S]);
-				DPDV->get(x, y) = DPDV->get(x + ddx[S], y + ddy[S]);
-				x += dx; y += dy;
-			};
-		};
-	};
-
-	// CORNERS
-	int MNX[4] = { 0,-1,-1,0 };
-	int MNY[4] = { 0,0,-1,-1 };
-
-	int MPX[4] = { -1,-1,0,0 };
-	int MPY[4] = { 0,-1,-1,0 };
-
-	UT_QuaternionF Q;
-
-	for (int i = 0; i < 4; i++)
-	{
-		UT_Vector3 dpdu = dPdu.get(MNX[i], MNY[i]);
-		UT_Vector3 dpdv = dPdv.get(MNX[i], MNY[i]);
-
-		UT_Vector3 OU = dpdu;
-		UT_Vector3 OV = dpdv;
-
-		// POS WINDING
-		UT_Vector3 O1U = OU;
-		UT_Vector3 O1V = OV;
-
-		int lastid = pb.id;
-		int idx = pb.f[i];
-
-		int lastref = i;
-
-		int far = 0;
-		while (idx != -1 && idx != id && far < 2)
-		{
-			const Patch& PP = *PEBBLE[idx];
-			int ref = PP.reflect(lastid);
-
-			if (ref == -1)
-			{
-				// INCONSISTENCE!
-				break;
-			};
-
-			int CS = lastref * 4 + ref;
-
-			float a  = A[CASE[CS]];
-
-			//const Page& e = PP.getPrimVar(name);
-
-			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MPX[ref], MPY[ref]);
-			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MPX[ref], MPY[ref]);
-			UT_Vector3 n = PP.getPrimVar("N").get(MPX[ref], MPY[ref]);
-
-			Q.updateFromAngleAxis(a, n);
-
-			O1U = Q.rotate(dpdu);
-			O1V = Q.rotate(dpdv);
-
-			ref++;
-			ref %= 4;
-
-			lastref = ref;
-
-			lastid = idx;
-			idx = PP.f[ref];
-
-			far++;
-		};
-
-		// NEG WINDING
-		UT_Vector3 O2U = OU;
-		UT_Vector3 O2V = OV;
-
-		lastid = pb.id;
-		idx = pb.f[(i + 3) % 4]; // i-1
-
-		far = 0;
-
-		lastref = i;
-
-		while (idx != -1 && idx != id && far < 2)
-		{
-			const Patch& PP = *PEBBLE[idx];
-			int ref = PP.reflect(lastid);
-
-			if (ref == -1)
-			{
-				// INCONSISTENCE!
-				break;
-			};
-
-			int CS = lastref * 4 + ref;
-
-			float a = A[CASE[CS]];
-
-			//const Page& e = PP.getPrimVar(name);
-
-			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MNX[ref], MNY[ref]);
-			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MNX[ref], MNY[ref]);
-			UT_Vector3 n = PP.getPrimVar("N").get(MNX[ref], MNY[ref]);
-
-			Q.updateFromAngleAxis(a, n);
-
-			O2U = Q.rotate(dpdu);
-			O2V = Q.rotate(dpdv);
-
-			ref += 3; // -1
-			ref %= 4;
-
-			lastref = ref;
-
-			lastid = idx;
-			idx = PP.f[ref];
-
-			far++;
-		};
-
-		UT_Vector3 resU = (O1U + O2U)*0.5; resU.normalize();
-		UT_Vector3 resV = (O1V + O2V)*0.5; resV.normalize();
-
-		DPDU->get(MNX[i], MNY[i]) = resU; 
-		DPDV->get(MNX[i], MNY[i]) = resV;
-	};
-
-	return true;
-}
-
-Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name)
+Page* getExtrapolatedPrimVar(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name)
 {
 	// MAKE
 	Page* _P = new Page(pb.dim[0] + 2, pb.dim[1] + 2, true);
 
 	Page& P = *_P;
 
-	P.m_projected = true;
-
 	// ASSIGN
-	UT_Matrix2FArray M(4);
-	M[0] = UT_Matrix2F(0, -1, 1, 0);
-	M[1] = UT_Matrix2F(-1, 0, 0, -1);
-	M[2] = UT_Matrix2F(0, 1, -1, 0);
-	M[3] = UT_Matrix2F(1);
-
 	const Page& E = pb.getPrimVar(name);
 
-	const Page& dPdu = pb.getPrimVar("dPdu");
-	const Page& dPdv = pb.getPrimVar("dPdv");
-	const Page& N = pb.getPrimVar("N");
+	const Page& DPDU = pb.getPrimVar("dPdu");
+	const Page& DPDV = pb.getPrimVar("dPdv");
+	const Page& G = pb.getPrimVar("g");
 
 	// CORE
 	for (int i = 0; i < pb.dim[0]; i++)
 		for (int j = 0; j < pb.dim[1]; j++)
-		{
-			UT_Vector3 dpdu = dPdu.get(i, j);
-			UT_Vector3 dpdv = dPdv.get(i, j);
-			UT_Vector3 n = N.get(i, j);
-
-			UT_Vector3 v = E.get(i, j);
-
-			float nproj = n.dot(v);
-
-			v -= n*nproj;
-			float lv = v.length();
-			v.normalize();
-
-			UT_Vector3 e(0,0,nproj);
-
-			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-			if (detxy != 0)
-			{
-				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-				e[0] = lv*dU / detxy; e[1] = lv*dV / detxy;
-			};
-
-			P.get(i + 1, j + 1) = e;
-		};
+			P.get(i + 1, j + 1) = E.get(i, j);
 
 	// SIDES
 
@@ -2402,6 +2144,8 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 	int ddy[4] = { 1,0,-1,0 };
 
 	int id = pb.id;
+
+	float _dd[2] = { 1.0/pb.dim[1], 1.0/pb.dim[0] };
 
 	for (int S = 0; S < 4; S++)
 	{
@@ -2455,50 +2199,13 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 			int x = x0;
 			int y = y0;
 
-
-			const Page& E = PP.getPrimVar(name);
-
-			const Page& dPdu = PP.getPrimVar("dPdu");
-			const Page& dPdv = PP.getPrimVar("dPdv");
-			const Page& N = PP.getPrimVar("N");
-
-			//const Page& e = PP.getPrimVar(name);
-
-			int CS = S * 4 + PP.reflect(id);
-
-			UT_Matrix2F& MM = M[CASE[CS]];
+			const Page& e = PP.getPrimVar(name);
 
 			for (int i = 0; i < sl[S]; i++)
 			{
-				//const UT_Vector3& src = E.get(X, Y);
-
-				UT_Vector3 dpdu = dPdu.get(X, Y);
-				UT_Vector3 dpdv = dPdv.get(X, Y);
-				UT_Vector3 n = N.get(X, Y);
-
-				UT_Vector3 v = E.get(X, Y);
-
-				float nproj = n.dot(v);
-
-				v -= n*nproj;
-				float lv = v.length();
-				v.normalize();
-
-				UT_Vector2 d(0, 0); 
-
-				float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-				if (detxy != 0)
-				{
-					float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-					float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-					d[0] = dU / detxy; d[1] = dV / detxy;
-				};
-
-				d = d*MM;
-
-				UT_Vector3 e(d[0], d[1], nproj);
-				P.get(x, y) = e;
-
+				const UT_Vector3& src = e.get(X, Y);
+				UT_Vector3& dest = P.get(x, y);
+				dest = src;
 				X += DX; Y += DY;
 				x += dx;
 				y += dy;
@@ -2506,6 +2213,12 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 		}
 		else // MARK == -1
 		{
+			int dev = S == 1 || S == 2 ? 1 : -1;
+			float dd = _dd[S%2];
+
+			const Page& DP = S % 2 == 0 ? DPDV : DPDU;
+			int gcomp = 1 - S%2;
+
 			int x0 = xs[S];
 			int y0 = ys[S];
 			int dx = dxs[S];
@@ -2517,7 +2230,9 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 			// JUST COPY ROW
 			for (int i = 0; i < sl[S]; i++)
 			{
-				P.get(x, y) = P.get(x + ddx[S], y + ddy[S]);
+				int xorig = clamp_i(x,0,pb.dim[0]-1);
+				int yorig = clamp_i(y,0,pb.dim[1]-1);
+				P.get(x, y) = P.get(x + ddx[S], y + ddy[S]) + dev*dd*G.get(xorig,yorig)[gcomp]*DP.get(xorig, yorig);
 				x += dx; y += dy;
 			};
 		};
@@ -2532,29 +2247,7 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 
 	for (int i = 0; i < 4; i++)
 	{
-		UT_Vector3 dpdu = dPdu.get(MNX[i], MNY[i]);
-		UT_Vector3 dpdv = dPdv.get(MNX[i], MNY[i]);
-		UT_Vector3 n = N.get(MNX[i], MNY[i]);
-
-		UT_Vector3 v = E.get(MNX[i], MNY[i]);
-
-		float nproj = n.dot(v);
-
-		v -= n*nproj;
-		float lv = v.length();
-		v.normalize();
-
-		UT_Vector3 e(0, 0, nproj);
-
-		float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-		if (detxy != 0)
-		{
-			float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-			float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-			e[0] = lv*dU / detxy; e[1] = lv*dV / detxy;
-		};
-
-		UT_Vector3 O = e; // E.get(MNX[i], MNY[i]);
+		UT_Vector3 O = E.get(MNX[i], MNY[i]);
 
 		// POS WINDING
 		UT_Vector3 O1 = O;
@@ -2562,8 +2255,6 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 		int lastid = pb.id;
 		int idx = pb.f[i];
 
-		int lastref = i;
-
 		int far = 0;
 		while (idx != -1 && idx != id && far < 2)
 		{
@@ -2576,44 +2267,12 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 				break;
 			};
 
-			int CS = lastref * 4 + ref;
+			const Page& e = PP.getPrimVar(name);
 
-			UT_Matrix2F& MM = M[CASE[CS]];
-
-			//const Page& e = PP.getPrimVar(name);
-
-			UT_Vector3 dpdu = dPdu.get(MPX[ref], MPY[ref]);
-			UT_Vector3 dpdv = dPdv.get(MPX[ref], MPY[ref]);
-			UT_Vector3 n = N.get(MPX[ref], MPY[ref]);
-
-			UT_Vector3 v = E.get(MPX[ref], MPY[ref]);
-
-			float nproj = n.dot(v);
-
-			v -= n*nproj;
-			float lv = v.length();
-			v.normalize();
-
-			UT_Vector2 d(0, 0);
-
-			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-			if (detxy != 0)
-			{
-				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-				d[0] = dU / detxy; d[1] = dV / detxy;
-			};
-
-			d = d*MM;
-
-			UT_Vector3 e(d[0], d[1], nproj);
-
-			O1 = e; // .get(MPX[ref], MPY[ref]);
+			O1 = e.get(MPX[ref], MPY[ref]);
 
 			ref++;
 			ref %= 4;
-
-			lastref = ref;
 
 			lastid = idx;
 			idx = PP.f[ref];
@@ -2629,8 +2288,6 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 
 		far = 0;
 
-		lastref = i;
-
 		while (idx != -1 && idx != id && far < 2)
 		{
 			const Patch& PP = *PEBBLE[idx];
@@ -2642,47 +2299,12 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 				break;
 			};
 
-			int CS = lastref * 4 + ref;
+			const Page& e = PP.getPrimVar(name);
 
-			UT_Matrix2F& MM = M[CASE[CS]];
-
-			//const Page& e = PP.getPrimVar(name);
-
-			UT_Vector3 dpdu = dPdu.get(MNX[ref], MNY[ref]);
-			UT_Vector3 dpdv = dPdv.get(MNX[ref], MNY[ref]);
-			UT_Vector3 n = N.get(MNX[ref], MNY[ref]);
-
-			UT_Vector3 v = E.get(MNX[ref], MNY[ref]);
-
-			float nproj = n.dot(v);
-
-			v -= n*nproj;
-			float lv = v.length();
-			v.normalize();
-
-			UT_Vector2 d(0, 0);
-
-			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
-			if (detxy != 0)
-			{
-				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
-				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
-				d[0] = dU / detxy; d[1] = dV / detxy;
-			};
-
-			d = d*MM;
-
-			UT_Vector3 e(d[0], d[1], nproj);
-
-
-			//const Page& e = PP.getPrimVar(name);
-
-			O2 = e; // .get(MNX[ref], MNY[ref]);
+			O2 = e.get(MNX[ref], MNY[ref]);
 
 			ref += 3; // -1
 			ref %= 4;
-
-			lastref = ref;
 
 			lastid = idx;
 			idx = PP.f[ref];
@@ -2699,6 +2321,619 @@ Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb
 	// RETURN
 	return _P;
 };
+
+//bool getExpandedPrimVarDiv(const vector<Patch*>& PEBBLE, const Patch & pb, Page* DPDU, Page* DPDV)
+//{
+//	float A[4] = { M_PI_2, M_PI, M_PI+M_PI_2, 0};
+//
+//	const Page& dPdu = pb.getPrimVar("dPdu");
+//	const Page& dPdv = pb.getPrimVar("dPdv");
+//	//const Page& N = pb.getPrimVar("N");
+//
+//	// CORE
+//	for (int i = 0; i < pb.dim[0]; i++)
+//		for (int j = 0; j < pb.dim[1]; j++)
+//		{
+//			DPDU->get(i + 1, j + 1) = dPdu.get(i, j);
+//			DPDV->get(i + 1, j + 1) = dPdv.get(i, j);
+//		};
+//
+//	// SIDES
+//	int xs[4] = { 1,	pb.dim[0] + 1,	pb.dim[0],	0 };
+//	int ys[4] = { 0,	1,			pb.dim[1] + 1,	pb.dim[1] };
+//
+//	int dxs[4] = { 1,0,-1,0 };
+//	int dys[4] = { 0,1,0,-1 };
+//
+//	int sl[4] = { pb.dim[0],pb.dim[1],pb.dim[0],pb.dim[1] };
+//
+//	int ddx[4] = { 0,-1,0,1 };
+//	int ddy[4] = { 1,0,-1,0 };
+//
+//	int id = pb.id;
+//
+//	for (int S = 0; S < 4; S++)
+//	{
+//		int mark = pb.f[S];
+//		if (mark != -1)
+//		{
+//			const Patch& PP = *PEBBLE[pb.f[S]];
+//
+//			int x0 = xs[S];
+//			int y0 = ys[S];
+//			int dx = dxs[S];
+//			int dy = dys[S];
+//
+//			int X0, Y0, DX, DY;
+//
+//			if (PP.f[0] == id)
+//			{
+//				X0 = PP.dim[0] - 1;
+//				Y0 = 0;
+//				DX = -1;
+//				DY = 0;
+//			};
+//
+//			if (PP.f[1] == id)
+//			{
+//				X0 = PP.dim[0] - 1;
+//				Y0 = PP.dim[1] - 1;
+//				DX = 0;
+//				DY = -1;
+//			};
+//
+//			if (PP.f[2] == id)
+//			{
+//				X0 = 0;
+//				Y0 = PP.dim[1] - 1;
+//				DX = 1;
+//				DY = 0;
+//			};
+//
+//			if (PP.f[3] == id)
+//			{
+//				X0 = 0;
+//				Y0 = 0;
+//				DX = 0;
+//				DY = 1;
+//			};
+//
+//			int X = X0;
+//			int Y = Y0;
+//
+//			int x = x0;
+//			int y = y0;
+//
+//			const Page& dPdu = PP.getPrimVar("dPdu");
+//			const Page& dPdv = PP.getPrimVar("dPdv");
+//			const Page& N = PP.getPrimVar("N");
+//
+//			int CS = S * 4 + PP.reflect(id);
+//			float a = A[CASE[CS]];
+//
+//			UT_QuaternionF Q;
+//
+//			for (int i = 0; i < sl[S]; i++)
+//			{
+//				UT_Vector3 dpdu = dPdu.get(X, Y);
+//				UT_Vector3 dpdv = dPdv.get(X, Y);
+//
+//				UT_Vector3 n = N.get(X, Y);
+//
+//				Q.updateFromAngleAxis(a, n);
+//
+//				DPDU->get(x, y) = Q.rotate(dpdu);;
+//				DPDV->get(x, y) = Q.rotate(dpdv);
+//
+//				X += DX; Y += DY;
+//				x += dx;
+//				y += dy;
+//			};
+//		}
+//		else // MARK == -1
+//		{
+//			int x0 = xs[S];
+//			int y0 = ys[S];
+//			int dx = dxs[S];
+//			int dy = dys[S];
+//
+//			int x = x0;
+//			int y = y0;
+//
+//			// JUST COPY ROW
+//			for (int i = 0; i < sl[S]; i++)
+//			{
+//				DPDU->get(x, y) = DPDU->get(x + ddx[S], y + ddy[S]);
+//				DPDV->get(x, y) = DPDV->get(x + ddx[S], y + ddy[S]);
+//				x += dx; y += dy;
+//			};
+//		};
+//	};
+//
+//	// CORNERS
+//	int MNX[4] = { 0,-1,-1,0 };
+//	int MNY[4] = { 0,0,-1,-1 };
+//
+//	int MPX[4] = { -1,-1,0,0 };
+//	int MPY[4] = { 0,-1,-1,0 };
+//
+//	UT_QuaternionF Q;
+//
+//	for (int i = 0; i < 4; i++)
+//	{
+//		UT_Vector3 dpdu = dPdu.get(MNX[i], MNY[i]);
+//		UT_Vector3 dpdv = dPdv.get(MNX[i], MNY[i]);
+//
+//		UT_Vector3 OU = dpdu;
+//		UT_Vector3 OV = dpdv;
+//
+//		// POS WINDING
+//		UT_Vector3 O1U = OU;
+//		UT_Vector3 O1V = OV;
+//
+//		int lastid = pb.id;
+//		int idx = pb.f[i];
+//
+//		int lastref = i;
+//
+//		int far = 0;
+//		while (idx != -1 && idx != id && far < 2)
+//		{
+//			const Patch& PP = *PEBBLE[idx];
+//			int ref = PP.reflect(lastid);
+//
+//			if (ref == -1)
+//			{
+//				// INCONSISTENCE!
+//				break;
+//			};
+//
+//			int CS = lastref * 4 + ref;
+//
+//			float a  = A[CASE[CS]];
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MPX[ref], MPY[ref]);
+//			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MPX[ref], MPY[ref]);
+//			UT_Vector3 n = PP.getPrimVar("N").get(MPX[ref], MPY[ref]);
+//
+//			Q.updateFromAngleAxis(a, n);
+//
+//			O1U = Q.rotate(dpdu);
+//			O1V = Q.rotate(dpdv);
+//
+//			ref++;
+//			ref %= 4;
+//
+//			lastref = ref;
+//
+//			lastid = idx;
+//			idx = PP.f[ref];
+//
+//			far++;
+//		};
+//
+//		// NEG WINDING
+//		UT_Vector3 O2U = OU;
+//		UT_Vector3 O2V = OV;
+//
+//		lastid = pb.id;
+//		idx = pb.f[(i + 3) % 4]; // i-1
+//
+//		far = 0;
+//
+//		lastref = i;
+//
+//		while (idx != -1 && idx != id && far < 2)
+//		{
+//			const Patch& PP = *PEBBLE[idx];
+//			int ref = PP.reflect(lastid);
+//
+//			if (ref == -1)
+//			{
+//				// INCONSISTENCE!
+//				break;
+//			};
+//
+//			int CS = lastref * 4 + ref;
+//
+//			float a = A[CASE[CS]];
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			UT_Vector3 dpdu = PP.getPrimVar("dPdu").get(MNX[ref], MNY[ref]);
+//			UT_Vector3 dpdv = PP.getPrimVar("dPdv").get(MNX[ref], MNY[ref]);
+//			UT_Vector3 n = PP.getPrimVar("N").get(MNX[ref], MNY[ref]);
+//
+//			Q.updateFromAngleAxis(a, n);
+//
+//			O2U = Q.rotate(dpdu);
+//			O2V = Q.rotate(dpdv);
+//
+//			ref += 3; // -1
+//			ref %= 4;
+//
+//			lastref = ref;
+//
+//			lastid = idx;
+//			idx = PP.f[ref];
+//
+//			far++;
+//		};
+//
+//		UT_Vector3 resU = (O1U + O2U)*0.5; resU.normalize();
+//		UT_Vector3 resV = (O1V + O2V)*0.5; resV.normalize();
+//
+//		DPDU->get(MNX[i], MNY[i]) = resU; 
+//		DPDV->get(MNX[i], MNY[i]) = resV;
+//	};
+//
+//	return true;
+//}
+//
+//Page* getExpandedPrimVarProjected(const vector<Patch*>& PEBBLE, const Patch & pb, UT_String name)
+//{
+//	// MAKE
+//	Page* _P = new Page(pb.dim[0] + 2, pb.dim[1] + 2, true);
+//
+//	Page& P = *_P;
+//
+//	P.m_projected = true;
+//
+//	// ASSIGN
+//	UT_Matrix2FArray M(4);
+//	M[0] = UT_Matrix2F(0, -1, 1, 0);
+//	M[1] = UT_Matrix2F(-1, 0, 0, -1);
+//	M[2] = UT_Matrix2F(0, 1, -1, 0);
+//	M[3] = UT_Matrix2F(1);
+//
+//	const Page& E = pb.getPrimVar(name);
+//
+//	const Page& dPdu = pb.getPrimVar("dPdu");
+//	const Page& dPdv = pb.getPrimVar("dPdv");
+//	const Page& N = pb.getPrimVar("N");
+//
+//	// CORE
+//	for (int i = 0; i < pb.dim[0]; i++)
+//		for (int j = 0; j < pb.dim[1]; j++)
+//		{
+//			UT_Vector3 dpdu = dPdu.get(i, j);
+//			UT_Vector3 dpdv = dPdv.get(i, j);
+//			UT_Vector3 n = N.get(i, j);
+//
+//			UT_Vector3 v = E.get(i, j);
+//
+//			float nproj = n.dot(v);
+//
+//			v -= n*nproj;
+//			float lv = v.length();
+//			v.normalize();
+//
+//			UT_Vector3 e(0,0,nproj);
+//
+//			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//			if (detxy != 0)
+//			{
+//				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//				e[0] = lv*dU / detxy; e[1] = lv*dV / detxy;
+//			};
+//
+//			P.get(i + 1, j + 1) = e;
+//		};
+//
+//	// SIDES
+//
+//	int xs[4] = { 1,	pb.dim[0] + 1,	pb.dim[0],	0 };
+//	int ys[4] = { 0,	1,			pb.dim[1] + 1,	pb.dim[1] };
+//
+//	int dxs[4] = { 1,0,-1,0 };
+//	int dys[4] = { 0,1,0,-1 };
+//
+//	int sl[4] = { pb.dim[0],pb.dim[1],pb.dim[0],pb.dim[1] };
+//
+//	int ddx[4] = { 0,-1,0,1 };
+//	int ddy[4] = { 1,0,-1,0 };
+//
+//	int id = pb.id;
+//
+//	for (int S = 0; S < 4; S++)
+//	{
+//		int mark = pb.f[S];
+//		if (mark != -1)
+//		{
+//			const Patch& PP = *PEBBLE[pb.f[S]];
+//
+//			int x0 = xs[S];
+//			int y0 = ys[S];
+//			int dx = dxs[S];
+//			int dy = dys[S];
+//
+//			int X0, Y0, DX, DY;
+//
+//			if (PP.f[0] == id)
+//			{
+//				X0 = PP.dim[0] - 1;
+//				Y0 = 0;
+//				DX = -1;
+//				DY = 0;
+//			};
+//
+//			if (PP.f[1] == id)
+//			{
+//				X0 = PP.dim[0] - 1;
+//				Y0 = PP.dim[1] - 1;
+//				DX = 0;
+//				DY = -1;
+//			};
+//
+//			if (PP.f[2] == id)
+//			{
+//				X0 = 0;
+//				Y0 = PP.dim[1] - 1;
+//				DX = 1;
+//				DY = 0;
+//			};
+//
+//			if (PP.f[3] == id)
+//			{
+//				X0 = 0;
+//				Y0 = 0;
+//				DX = 0;
+//				DY = 1;
+//			};
+//
+//			int X = X0;
+//			int Y = Y0;
+//
+//			int x = x0;
+//			int y = y0;
+//
+//
+//			const Page& E = PP.getPrimVar(name);
+//
+//			const Page& dPdu = PP.getPrimVar("dPdu");
+//			const Page& dPdv = PP.getPrimVar("dPdv");
+//			const Page& N = PP.getPrimVar("N");
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			int CS = S * 4 + PP.reflect(id);
+//
+//			UT_Matrix2F& MM = M[CASE[CS]];
+//
+//			for (int i = 0; i < sl[S]; i++)
+//			{
+//				//const UT_Vector3& src = E.get(X, Y);
+//
+//				UT_Vector3 dpdu = dPdu.get(X, Y);
+//				UT_Vector3 dpdv = dPdv.get(X, Y);
+//				UT_Vector3 n = N.get(X, Y);
+//
+//				UT_Vector3 v = E.get(X, Y);
+//
+//				float nproj = n.dot(v);
+//
+//				v -= n*nproj;
+//				float lv = v.length();
+//				v.normalize();
+//
+//				UT_Vector2 d(0, 0); 
+//
+//				float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//				if (detxy != 0)
+//				{
+//					float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//					float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//					d[0] = dU / detxy; d[1] = dV / detxy;
+//				};
+//
+//				d = d*MM;
+//
+//				UT_Vector3 e(d[0], d[1], nproj);
+//				P.get(x, y) = e;
+//
+//				X += DX; Y += DY;
+//				x += dx;
+//				y += dy;
+//			};
+//		}
+//		else // MARK == -1
+//		{
+//			int x0 = xs[S];
+//			int y0 = ys[S];
+//			int dx = dxs[S];
+//			int dy = dys[S];
+//
+//			int x = x0;
+//			int y = y0;
+//
+//			// JUST COPY ROW
+//			for (int i = 0; i < sl[S]; i++)
+//			{
+//				P.get(x, y) = P.get(x + ddx[S], y + ddy[S]);
+//				x += dx; y += dy;
+//			};
+//		};
+//	};
+//
+//	// CORNERS
+//	int MNX[4] = { 0,-1,-1,0 };
+//	int MNY[4] = { 0,0,-1,-1 };
+//
+//	int MPX[4] = { -1,-1,0,0 };
+//	int MPY[4] = { 0,-1,-1,0 };
+//
+//	for (int i = 0; i < 4; i++)
+//	{
+//		UT_Vector3 dpdu = dPdu.get(MNX[i], MNY[i]);
+//		UT_Vector3 dpdv = dPdv.get(MNX[i], MNY[i]);
+//		UT_Vector3 n = N.get(MNX[i], MNY[i]);
+//
+//		UT_Vector3 v = E.get(MNX[i], MNY[i]);
+//
+//		float nproj = n.dot(v);
+//
+//		v -= n*nproj;
+//		float lv = v.length();
+//		v.normalize();
+//
+//		UT_Vector3 e(0, 0, nproj);
+//
+//		float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//		if (detxy != 0)
+//		{
+//			float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//			float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//			e[0] = lv*dU / detxy; e[1] = lv*dV / detxy;
+//		};
+//
+//		UT_Vector3 O = e; // E.get(MNX[i], MNY[i]);
+//
+//		// POS WINDING
+//		UT_Vector3 O1 = O;
+//
+//		int lastid = pb.id;
+//		int idx = pb.f[i];
+//
+//		int lastref = i;
+//
+//		int far = 0;
+//		while (idx != -1 && idx != id && far < 2)
+//		{
+//			const Patch& PP = *PEBBLE[idx];
+//			int ref = PP.reflect(lastid);
+//
+//			if (ref == -1)
+//			{
+//				// INCONSISTENCE!
+//				break;
+//			};
+//
+//			int CS = lastref * 4 + ref;
+//
+//			UT_Matrix2F& MM = M[CASE[CS]];
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			UT_Vector3 dpdu = dPdu.get(MPX[ref], MPY[ref]);
+//			UT_Vector3 dpdv = dPdv.get(MPX[ref], MPY[ref]);
+//			UT_Vector3 n = N.get(MPX[ref], MPY[ref]);
+//
+//			UT_Vector3 v = E.get(MPX[ref], MPY[ref]);
+//
+//			float nproj = n.dot(v);
+//
+//			v -= n*nproj;
+//			float lv = v.length();
+//			v.normalize();
+//
+//			UT_Vector2 d(0, 0);
+//
+//			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//			if (detxy != 0)
+//			{
+//				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//				d[0] = dU / detxy; d[1] = dV / detxy;
+//			};
+//
+//			d = d*MM;
+//
+//			UT_Vector3 e(d[0], d[1], nproj);
+//
+//			O1 = e; // .get(MPX[ref], MPY[ref]);
+//
+//			ref++;
+//			ref %= 4;
+//
+//			lastref = ref;
+//
+//			lastid = idx;
+//			idx = PP.f[ref];
+//
+//			far++;
+//		};
+//
+//		// NEG WINDING
+//		UT_Vector3 O2 = O;
+//
+//		lastid = pb.id;
+//		idx = pb.f[(i + 3) % 4]; // i-1
+//
+//		far = 0;
+//
+//		lastref = i;
+//
+//		while (idx != -1 && idx != id && far < 2)
+//		{
+//			const Patch& PP = *PEBBLE[idx];
+//			int ref = PP.reflect(lastid);
+//
+//			if (ref == -1)
+//			{
+//				// INCONSISTENCE!
+//				break;
+//			};
+//
+//			int CS = lastref * 4 + ref;
+//
+//			UT_Matrix2F& MM = M[CASE[CS]];
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			UT_Vector3 dpdu = dPdu.get(MNX[ref], MNY[ref]);
+//			UT_Vector3 dpdv = dPdv.get(MNX[ref], MNY[ref]);
+//			UT_Vector3 n = N.get(MNX[ref], MNY[ref]);
+//
+//			UT_Vector3 v = E.get(MNX[ref], MNY[ref]);
+//
+//			float nproj = n.dot(v);
+//
+//			v -= n*nproj;
+//			float lv = v.length();
+//			v.normalize();
+//
+//			UT_Vector2 d(0, 0);
+//
+//			float detxy = dpdu[0] * dpdv[1] - dpdu[1] * dpdv[0];
+//			if (detxy != 0)
+//			{
+//				float dU = v[0] * dpdv[1] - v[1] * dpdv[0];
+//				float dV = dpdu[0] * v[1] - dpdu[1] * v[0];
+//				d[0] = dU / detxy; d[1] = dV / detxy;
+//			};
+//
+//			d = d*MM;
+//
+//			UT_Vector3 e(d[0], d[1], nproj);
+//
+//
+//			//const Page& e = PP.getPrimVar(name);
+//
+//			O2 = e; // .get(MNX[ref], MNY[ref]);
+//
+//			ref += 3; // -1
+//			ref %= 4;
+//
+//			lastref = ref;
+//
+//			lastid = idx;
+//			idx = PP.f[ref];
+//
+//			far++;
+//		};
+//
+//		UT_Vector3 res = (O1 + O2)*0.5;
+//
+//		P.get(MNX[i], MNY[i]) = res;
+//	};
+//
+//
+//	// RETURN
+//	return _P;
+//};
 
 bool declareEntity(vector<Patch*>& PEBBLE, UT_String name)
 {

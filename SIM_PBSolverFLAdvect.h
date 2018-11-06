@@ -33,7 +33,7 @@ private:
 
 	void solvePartial(const UT_JobInfo &info);
 
-	vector<Page*> m_Ps, m_Vs, m_Rels, m_dPdUs, m_dPdVs, m_Ns;
+	vector<Page*> m_Ps, m_Vs, m_Rels, m_dPdUs, m_dPdVs, m_Ns, m_Gs;
 	UT_Lock m_lock;
 
 	vector<Proxy> m_sources;

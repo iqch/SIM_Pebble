@@ -50,6 +50,7 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 	m_Ps.resize(psz);
 	m_Vs.resize(psz);
 	m_Rels.resize(psz);
+	m_Gs.resize(psz);
 
 	m_dPdUs.resize(psz);
 	m_dPdVs.resize(psz);
@@ -108,7 +109,7 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 			const Page& var = pb.getPrimVar(name);
 			if (var.m_projected)
 			{
-				m_sources[pb.id][chi] = getExpandedPrimVarProjected(m_pebble->m_P, pb, name);
+				m_sources[pb.id][chi] = getExpandedPrimVar(m_pebble->m_P, pb, name);
 				//m_proxies[pb.id][chi] = getExpandedPrimVarProjected(m_pebble->m_P, pb, name);
 			}
 			else
@@ -129,6 +130,7 @@ SIM_Solver::SIM_Result SIM_PBSolverFLAdvect::solveSingleObjectSubclass(SIM_Engin
 		if (m_Vs[i] != NULL) delete m_Vs[i];
 
 		if (m_Rels[i] != NULL) delete m_Rels[i];
+		if (m_Gs[i] != NULL) delete m_Gs[i];
 
 		if (m_dPdUs[i] != NULL) delete m_dPdUs[i];
 		if (m_dPdVs[i] != NULL) delete m_dPdVs[i];
@@ -209,12 +211,11 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 				colors.append(UT_Vector3(1, 1, 0));
 
 				traceStat stat;
+				stat.id = id;
 
-				trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_lock, stat);
+				trace(m_pebble->m_P, uv, length, path, colors, m_Ps, m_Vs, m_dPdUs, m_dPdVs, m_Ns, m_Rels, m_Gs, m_lock, stat);
 
 				UT_Vector3 C = path.last();
-
-				//Patch& PB = *m_pebble->m_P[C[2]];
 
 				// EACH PAGE
 				for (int chi = 0; chi < m_channels.size(); chi++)
@@ -224,31 +225,19 @@ void SIM_PBSolverFLAdvect::solvePartial(const UT_JobInfo & info)
 					
 					if (PP.m_projected)
 					{
+						// RECALCULATE FAR NON-ORTHONORMAL PROJECTION
+						const Patch& PB = *m_pebble->m_P[C[2]];
+
+						UT_Vector2F _V = PB.decompose(v,C);
+
+						_V *= stat.w;
+
+						v[0] = _V[0];
+						v[1] = _V[1];
 						v[2] = 0;
-						//Patch& PB = *m_pebble->m_P[C[2]];
 
-						//UT_Vector3 dPdu = PB.getPrimVar("dPdu").get(C);
-						//UT_Vector3 dPdv = PB.getPrimVar("dPdv").get(C);
-
-						//dPdv -= dPdu.dot(dPdv)*dPdu;
-						//dPdv.normalize();
-
-						//UT_Vector3 _V = v[0]*dPdu + v[1]*dPdv + v[2]* PB.getPrimVar("N").get(C);
-
-						//UT_Vector3 _n = N.get(uv);
-
-						//v[2] = _V.dot(_n);
-
-						//_V -= v[2] * _n;
-
-						//UT_Vector3 _dpdu = DPDU.get(uv);
-
-						//UT_Vector3 _dpdv = DPDV.get(uv);
-						//_dpdv -= _dpdu*_dpdu.dot(_dpdv);
-						//_dpdv.normalize();
-
-						//v[0] = _V.dot(_dpdu);
-						//v[1] = _V.dot(_dpdv);
+						// RESTORE IT LOCALLY
+						v = pb.composite(v, uv);
 					};
 
 					m_proxies[pb.id][chi]->get(I + 1, J + 1) = v;

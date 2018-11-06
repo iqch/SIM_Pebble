@@ -8,6 +8,9 @@ public:
 	GET_GUIDE_FUNC_B(SIM_NAME_SHOWGUIDE, ShowGuide, true);
 
 	GET_GUIDE_FUNC_F(SIM_NAME_TIMESTEP, Timestep, 0.1);
+
+	GET_GUIDE_FUNC_F(SIM_NAME_MINMAGNITUDE, MinMagnitude, 1e-4);
+
 	GET_GUIDE_FUNC_F(SIM_NAME_AMOUNT, Amount, 2);
 	GET_GUIDE_FUNC_I(SIM_NAME_SEED, Seed, 0);
 	GET_GUIDE_FUNC_I(SIM_NAME_MARK, Mark, -1);
@@ -56,10 +59,11 @@ private:
 	mutable uint m_S;
 	mutable float m_amount;
 	mutable float m_timestep;
+	mutable float m_minmagnitude;
 	//bool m_oneWay;
 	mutable UT_Lock m_lock;
 
-	mutable vector<Page*> m_Ps, m_Vs, m_Rels, m_dPdUs, m_dPdVs, m_Ns;
+	mutable vector<Page*> m_Ps, m_Vs, m_Rels, m_dPdUs, m_dPdVs, m_Ns, m_Gs;
 	mutable bool m_sg;
 
 	mutable GU_Detail* m_gdp;
