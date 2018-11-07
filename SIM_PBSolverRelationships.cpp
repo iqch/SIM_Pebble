@@ -71,13 +71,27 @@ SIM_Solver::SIM_Result SIM_PBSolverRelationships::solveSingleObjectSubclass(SIM_
 
 					if (!geometry) continue;
 
+					const SIM_Position* pos = affector->getPosition();
+
+					UT_DMatrix4 xform, worldtogeo;
+
+					geometry->getTransform(xform);
+					xform.invert();
+					if (pos)
+					{
+						pos->getInverseTransform(worldtogeo);
+						xform = worldtogeo * xform;
+					}
+
+					m_colliders_xforms.push_back(xform);
+
 					const GU_ConstDetailHandle &gdh = geometry->getGeometry();
 
 					if (gdh.isNull()) continue;
 
 					GU_DetailHandleAutoReadLock gdl(gdh);
 					const GU_Detail *gdp = gdl.getGdp();
-
+					
 					const GA_PrimitiveGroup *zgroup = 0;
 
 					GU_RayIntersect *isect = new GU_RayIntersect(gdp, zgroup, 0, 0, 1, 0, true);
@@ -97,6 +111,20 @@ SIM_Solver::SIM_Result SIM_PBSolverRelationships::solveSingleObjectSubclass(SIM_
 					const SIM_Geometry	*geometry = affector->getGeometry();
 
 					if (!geometry) continue;
+
+					const SIM_Position* pos = affector->getPosition();
+
+					UT_DMatrix4 xform, worldtogeo;
+
+					geometry->getTransform(xform);
+					xform.invert();
+					if (pos)
+					{
+						pos->getInverseTransform(worldtogeo);
+						xform = worldtogeo * xform;
+					}
+
+					m_sources_xforms.push_back(xform);
 
 					const GU_ConstDetailHandle &gdh = geometry->getGeometry();
 
@@ -162,18 +190,23 @@ void SIM_PBSolverRelationships::solvePartial(const UT_JobInfo & info)
 
 				UT_Vector3 orig(PP.get(i, j));
 
-				for (GU_RayIntersect *isect : m_sources)
+				//for (GU_RayIntersect *isect : m_sources)
+				for (int k = 0; k<m_sources.size(); k++)
 				{
-					if (isect->isInside(orig, 0))
+					UT_Vector3 O = orig;
+					O *= m_sources_xforms[k];
+					if (m_sources[k]->isInside(O, 0))
 					{
 						rel[0] = 1;
 						break;
 					};
 				};
 
-				for (GU_RayIntersect *isect : m_colliders)
+				for (int k=0;k<m_colliders.size();k++)
 				{
-					if (isect->isInside(orig, 0))
+					UT_Vector3 O = orig;
+					O *= m_colliders_xforms[k];
+					if (m_colliders[k]->isInside(O, 0))
 					{
 						rel[1] = 1;
 						break;

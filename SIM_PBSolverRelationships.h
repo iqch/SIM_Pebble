@@ -35,5 +35,7 @@ private:
 	UT_String m_relAttr;
 
 	vector<GU_RayIntersect*> m_colliders;
+	vector<UT_DMatrix4> m_colliders_xforms;
 	vector<GU_RayIntersect*> m_sources;
+	vector<UT_DMatrix4> m_sources_xforms;
 };
